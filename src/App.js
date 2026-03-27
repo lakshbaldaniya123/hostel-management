@@ -20,6 +20,17 @@ import WardenComplaintPage from "./pages/WardenComplaintPage";
 import SecurityNuisancePage from "./pages/SecurityNuisancePage";
 import UserMeetingsPage from "./pages/UserMeetingsPage";
 import WardenMeetingsPage from "./pages/WardenMeetingsPage";
+
+import StudentGatePassPage from "./pages/StudentGatePassPage";
+import WardenGatePassPage from "./pages/WardenGatePassPage";
+import StudentMessPage from "./pages/StudentMessPage";
+import WardenMessPage from "./pages/WardenMessPage";
+import StudentGymPage from "./pages/StudentGymPage";
+import WardenGymPage from "./pages/WardenGymPage";
+import StudentLostFoundPage from "./pages/StudentLostFoundPage";
+import WardenLostFoundPage from "./pages/WardenLostFoundPage";
+import SecurityGatePassPage from "./pages/SecurityGatePassPage";
+
 import { LeaveProvider } from "./context/LeaveContext";
 import { HostelProvider } from "./context/HostelContext";
 import { MaintenanceProvider } from "./context/MaintenanceContext";
@@ -46,6 +57,7 @@ function App() {
           <Route path="/user-complaints" element={<UserComplaintPage />} />
           <Route path="/warden-complaints" element={<WardenComplaintPage />} />
           <Route path="/nuisance-report" element={<SecurityNuisancePage />} />
+          <Route path="/security-gate-pass" element={<SecurityGatePassPage />} />
           
           {/* Strictly isolated meeting boards */}
           <Route path="/student-meetings" element={<UserMeetingsPage fixedRole="Student" />} />
@@ -59,6 +71,17 @@ function App() {
           <Route path="/leave-requests" element={<WardenLeavePage />} />
           <Route path="/students" element={<WardenStudentsPage />} />
           <Route path="/rooms" element={<WardenRoomsPage />} />
+
+          {/* New Injected Modules */}
+          <Route path="/gate-pass" element={<StudentGatePassPage />} />
+          <Route path="/warden-gate-pass" element={<WardenGatePassPage />} />
+          <Route path="/mess" element={<StudentMessPage />} />
+          <Route path="/warden-mess" element={<WardenMessPage />} />
+          <Route path="/gym" element={<StudentGymPage />} />
+          <Route path="/warden-gym" element={<WardenGymPage />} />
+          <Route path="/lost-found" element={<StudentLostFoundPage />} />
+          <Route path="/warden-lost-found" element={<WardenLostFoundPage />} />
+
           </Routes>
         </BrowserRouter>
         </LeaveProvider>
