@@ -5,44 +5,53 @@ export const HostelContext = createContext();
 export const HostelProvider = ({ children }) => {
   const [students, setStudents] = useState([
     { 
-      studentId: 'STU001', name: 'Roshan M.', email: 'roshan@example.com', phone: '+91 9876543210', 
-      course: 'B.Tech IT', roomNo: '201', status: 'In Hostel', parentName: 'Mr. M. Sharma', 
+      studentId: 'STU001', name: 'Rahul Sharma', email: 'rahul@example.com', phone: '+91 9876543210', 
+      course: 'B.Tech IT', roomNo: 'A-101', status: 'In Hostel', parentName: 'Mr. Sharma', 
       parentPhone: '+91 9988776655', feesStatus: 'Paid', 
-      entryExitLogs: [{ id: 1, type: 'Entry', time: '18:30', date: '26 Mar 2026', gate: 'Main Gate' }] 
+      entryExitLogs: [] 
     },
     { 
-      studentId: 'STU002', name: 'Lakshya B.', email: 'lakshya@example.com', phone: '+91 9876543211', 
-      course: 'B.Tech CS', roomNo: '305', status: 'Out', parentName: 'Mr. B. Patel', 
+      studentId: 'STU002', name: 'Deepak Verma', email: 'deepak@example.com', phone: '+91 9876543211', 
+      course: 'B.Tech CS', roomNo: 'A-101', status: 'In Hostel', parentName: 'Mr. Verma', 
       parentPhone: '+91 9988776644', feesStatus: 'Pending', 
-      entryExitLogs: [{ id: 3, type: 'Exit', time: '14:00', date: '26 Mar 2026', gate: 'Gate 2 (Leave)' }] 
+      entryExitLogs: [] 
     },
     { 
-      studentId: 'STU003', name: 'Ankit S.', email: 'ankit@example.com', phone: '+91 9876543212', 
-      course: 'B.Tech CE', roomNo: '108', status: 'In Hostel', parentName: 'Mr. S. Kumar', 
+      studentId: 'STU003', name: 'Sneha Reddy', email: 'sneha@example.com', phone: '+91 9876543212', 
+      course: 'B.Tech CE', roomNo: 'A-102', status: 'In Hostel', parentName: 'Mr. Reddy', 
       parentPhone: '+91 9988776633', feesStatus: 'Paid', 
-      entryExitLogs: [{ id: 5, type: 'Entry', time: '20:15', date: '25 Mar 2026', gate: 'Main Gate' }] 
+      entryExitLogs: [] 
     },
     { 
-      studentId: 'STU004', name: 'Priya R.', email: 'priya@example.com', phone: '+91 9876543213', 
-      course: 'B.Sc Physics', roomNo: '214', status: 'In Hostel', parentName: 'Mr. R. Singh', 
+      studentId: 'STU004', name: 'Priya Patel', email: 'priya@example.com', phone: '+91 9876543213', 
+      course: 'B.Sc Physics', roomNo: 'B-205', status: 'In Hostel', parentName: 'Mr. Patel', 
       parentPhone: '+91 9988776622', feesStatus: 'Paid', 
-      entryExitLogs: [{ id: 7, type: 'Entry', time: '09:10', date: '26 Mar 2026', gate: 'Gate 2' }] 
+      entryExitLogs: [] 
     },
     { 
-      studentId: 'STU005', name: 'Rahul V.', email: 'rahul@example.com', phone: '+91 9876543214', 
-      course: 'B.Tech EE', roomNo: 'Unassigned', status: 'Out', parentName: 'Mr. V. Verma', 
+      studentId: 'STU005', name: 'Anita Singh', email: 'anita@example.com', phone: '+91 9876543214', 
+      course: 'B.Tech EE', roomNo: 'B-205', status: 'In Hostel', parentName: 'Mr. Singh', 
       parentPhone: '+91 9988776611', feesStatus: 'Pending', 
+      entryExitLogs: [] 
+    },
+    { 
+      studentId: 'STU006', name: 'Ananya Gupta', email: 'ananya@example.com', phone: '+91 9876543215', 
+      course: 'B.Tech ME', roomNo: 'D-401', status: 'In Hostel', parentName: 'Mr. Gupta', 
+      parentPhone: '+91 9988776600', feesStatus: 'Paid', 
       entryExitLogs: [] 
     },
   ]);
 
   const [rooms, setRooms] = useState([
-    { roomNo: '108', capacity: 2, occupants: 1, availabilityStatus: 'Available', studentIds: ['STU003'] },
-    { roomNo: '201', capacity: 3, occupants: 1, availabilityStatus: 'Available', studentIds: ['STU001'] },
-    { roomNo: '214', capacity: 2, occupants: 1, availabilityStatus: 'Available', studentIds: ['STU004'] },
-    { roomNo: '305', capacity: 1, occupants: 1, availabilityStatus: 'Full', studentIds: ['STU002'] },
-    { roomNo: '401', capacity: 3, occupants: 0, availabilityStatus: 'Available', studentIds: [] },
-    { roomNo: '402', capacity: 2, occupants: 0, availabilityStatus: 'Maintenance', studentIds: [] },
+    { roomNo: 'A-101', capacity: 2, occupants: 2, availabilityStatus: 'Full', studentIds: ['STU001', 'STU002'], block: 'A', type: 'Double' },
+    { roomNo: 'A-102', capacity: 1, occupants: 1, availabilityStatus: 'Full', studentIds: ['STU003'], block: 'A', type: 'Single' },
+    { roomNo: 'A-103', capacity: 2, occupants: 0, availabilityStatus: 'Available', studentIds: [], block: 'A', type: 'Double' },
+    { roomNo: 'B-205', capacity: 3, occupants: 2, availabilityStatus: 'Available', studentIds: ['STU004', 'STU005'], block: 'B', type: 'Triple' },
+    { roomNo: 'C-312', capacity: 2, occupants: 0, availabilityStatus: 'Maintenance', studentIds: [], block: 'C', type: 'Double' },
+    { roomNo: 'D-401', capacity: 1, occupants: 1, availabilityStatus: 'Full', studentIds: ['STU006'], block: 'D', type: 'Single' },
+    // A few old ones to preserve existing structure for other pages if needed
+    { roomNo: '108', capacity: 2, occupants: 0, availabilityStatus: 'Available', studentIds: [], block: 'A', type: 'Double' },
+    { roomNo: '201', capacity: 3, occupants: 0, availabilityStatus: 'Available', studentIds: [], block: 'B', type: 'Triple' },
   ]);
 
   const allocateStudentToRoom = (studentId, newRoomNo) => {

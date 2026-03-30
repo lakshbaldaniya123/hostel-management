@@ -51,8 +51,9 @@ const menuItems = {
   Admin: [
     { label: 'Dashboard',   icon: Icons.Dashboard,   path: '/admin-dashboard' },
     { label: 'Students',    icon: Icons.Students,    path: '/students'        },
-    { label: 'Rooms',       icon: Icons.Rooms,       path: '/rooms'           },
-    { label: 'Fees',        icon: Icons.Fees,        path: '/fees'            },
+    { label: 'Rooms',       icon: Icons.Rooms,       path: '/admin-rooms'     },
+    { label: 'Maintenance', icon: Icons.Maintenance, path: '/admin-maintenance'},
+    { label: 'Fees',        icon: Icons.Fees,        path: '/admin-fees'      },
     { label: 'Staff',       icon: Icons.Staff,       path: '/staff'           },
     { label: 'Reports',     icon: Icons.Reports,     path: '/reports'         },
     { label: 'Gate Pass',   icon: Icons.GatePass,    path: '/warden-gate-pass'},

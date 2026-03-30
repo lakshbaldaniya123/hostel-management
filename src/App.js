@@ -15,6 +15,9 @@ import WardenStudentsPage from "./pages/WardenStudentsPage";
 import WardenRoomsPage from "./pages/WardenRoomsPage";
 import StudentMaintenancePage from "./pages/StudentMaintenancePage";
 import WardenMaintenancePage from "./pages/WardenMaintenancePage";
+import AdminRoomsPage from "./pages/AdminRoomsPage";
+import AdminMaintenancePage from "./pages/AdminMaintenancePage";
+import AdminFeesPage from "./pages/AdminFeesPage";
 import UserComplaintPage from "./pages/UserComplaintPage";
 import WardenComplaintPage from "./pages/WardenComplaintPage";
 import SecurityNuisancePage from "./pages/SecurityNuisancePage";
@@ -50,6 +53,9 @@ function App() {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/warden-dashboard" element={<WardenDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-rooms" element={<AdminRoomsPage />} />
+          <Route path="/admin-maintenance" element={<AdminMaintenancePage />} />
+          <Route path="/admin-fees" element={<AdminFeesPage />} />
           <Route path="/housekeeper-dashboard" element={<HousekeeperDashboard />} />
           <Route path="/security-dashboard" element={<SecurityDashboard />} />
           <Route path="/student-maintenance" element={<StudentMaintenancePage />} />
