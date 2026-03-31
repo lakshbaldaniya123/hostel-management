@@ -2,20 +2,14 @@ import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { ComplaintContext } from '../context/ComplaintContext';
 
-// Current logged in student mock profile
-const CURRENT_STUDENT = {
-  name: 'Priya R.',
-  mobile: '9876543210',
-  roomNo: '214'
-};
 
 export default function UserComplaintPage() {
   const { complaints, raiseComplaint } = useContext(ComplaintContext);
   
   const [activeTab, setActiveTab] = useState('lodge');
-  const [name, setName] = useState(CURRENT_STUDENT.name);
-  const [mobile, setMobile] = useState(CURRENT_STUDENT.mobile);
-  const [roomNo, setRoomNo] = useState(CURRENT_STUDENT.roomNo);
+  const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [roomNo, setRoomNo] = useState('');
   const [description, setDescription] = useState('');
 
   // Filter complaints based on name and mobile to simulate user history
@@ -71,7 +65,7 @@ export default function UserComplaintPage() {
                 <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-center justify-between mb-2">
                    <div className="flex items-center gap-3">
                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 font-bold">
-                       {CURRENT_STUDENT.name.charAt(0)}
+                       {(name || 'S').charAt(0).toUpperCase()}
                      </span>
                      <span className="text-sm font-bold text-red-900">Student Account</span>
                    </div>
@@ -86,8 +80,7 @@ export default function UserComplaintPage() {
                       value={name}
                       onChange={e => setName(e.target.value)}
                       placeholder="e.g. Lakshya B."
-                      className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-red-500 focus:ring-0 outline-none transition-colors bg-gray-50 cursor-not-allowed text-gray-500" 
-                      disabled
+                      className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-red-500 focus:ring-0 outline-none transition-colors bg-white text-gray-900" 
                     />
                   </div>
                   <div>
@@ -98,8 +91,7 @@ export default function UserComplaintPage() {
                       value={mobile}
                       onChange={e => setMobile(e.target.value)}
                       placeholder="e.g. 9876543210"
-                      className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-red-500 focus:ring-0 outline-none transition-colors bg-gray-50 cursor-not-allowed text-gray-500" 
-                      disabled
+                      className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-red-500 focus:ring-0 outline-none transition-colors bg-white text-gray-900" 
                     />
                   </div>
                 </div>
@@ -112,8 +104,7 @@ export default function UserComplaintPage() {
                     value={roomNo}
                     onChange={e => setRoomNo(e.target.value)}
                     placeholder="e.g. 305"
-                    className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-red-500 focus:ring-0 outline-none transition-colors bg-gray-50 cursor-not-allowed text-gray-500" 
-                    disabled
+                    className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-red-500 focus:ring-0 outline-none transition-colors bg-white text-gray-900" 
                   />
                 </div>
 

@@ -45,7 +45,7 @@ export const MaintenanceProvider = ({ children }) => {
     }
   ]);
 
-  const addRequest = (studentId, studentName, roomNo, issueType, description) => {
+  const addRequest = (studentId, studentName, roomNo, issueType, description, image = null) => {
     const newRequest = {
       id: `M00${requests.length + 1}`,
       studentId,
@@ -53,6 +53,7 @@ export const MaintenanceProvider = ({ children }) => {
       roomNo,
       issueType,
       description,
+      image,
       status: 'Pending',
       scheduledDate: null,
       scheduledTime: null,

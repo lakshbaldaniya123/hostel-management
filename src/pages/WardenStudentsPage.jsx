@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { HostelContext } from '../context/HostelContext';
 
-export default function WardenStudentsPage() {
+export default function WardenStudentsPage({ fixedRole = "Warden" }) {
   const { students, updateStudentDetails } = useContext(HostelContext);
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,7 +36,7 @@ export default function WardenStudentsPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800 relative">
-      <Sidebar role="Warden" />
+      <Sidebar role={fixedRole} />
       
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         {/* Header */}

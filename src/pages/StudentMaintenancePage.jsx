@@ -14,6 +14,39 @@ export default function StudentMaintenancePage() {
   
   const [issueType, setIssueType] = useState('Electrical');
   const [description, setDescription] = useState('');
+  const [image, setImage] = useState(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 500;
+          const MAX_HEIGHT = 500;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          } else {
+            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          setImage(canvas.toDataURL('image/jpeg', 0.5));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   
   // Rejection state
   const [rejectingId, setRejectingId] = useState(null);
@@ -24,9 +57,10 @@ export default function StudentMaintenancePage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!description.trim()) return;
-    addRequest(CURRENT_STUDENT.id, CURRENT_STUDENT.name, CURRENT_STUDENT.roomNo, issueType, description);
+    addRequest(CURRENT_STUDENT.id, CURRENT_STUDENT.name, CURRENT_STUDENT.roomNo, issueType, description, image);
     setDescription('');
     setIssueType('Electrical');
+    setImage(null);
   };
 
   const handleReject = () => {
@@ -97,6 +131,22 @@ export default function StudentMaintenancePage() {
                       className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-medium focus:border-indigo-500 focus:ring-0 bg-gray-50 outline-none transition-colors resize-none placeholder:text-gray-300 placeholder:font-normal"
                     ></textarea>
                   </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Upload Photo (Optional)</label>
+                    <div className="flex items-center gap-4">
+                      <label className="cursor-pointer bg-gray-50 border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all rounded-xl p-4 flex-1 text-center flex flex-col items-center justify-center min-h-[100px]">
+                        <svg className="w-6 h-6 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <span className="text-sm font-semibold text-gray-500">Click to upload image</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                      </label>
+                      {image && (
+                        <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-100 flex-shrink-0">
+                          <img src={image} alt="Preview" className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => setImage(null)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 hover:bg-white"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <button 
                     type="submit"
                     disabled={!description.trim()}
@@ -149,6 +199,11 @@ export default function StudentMaintenancePage() {
                       </span>
                     </div>
 
+                    {req.image && (
+                      <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-gray-100" style={{ maxHeight: '200px' }}>
+                        <img src={req.image} alt="Issue" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <p className="text-gray-700 text-sm font-medium leading-relaxed mb-6">
                       {req.description}
                     </p>

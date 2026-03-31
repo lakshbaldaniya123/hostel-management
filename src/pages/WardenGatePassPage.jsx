@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 
-export default function WardenGatePassPage() {
+export default function WardenGatePassPage({ fixedRole = "Warden" }) {
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function WardenGatePassPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
-      <Sidebar role="Warden" />
+      <Sidebar role={fixedRole} />
       
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto w-full md:w-auto mt-16 md:mt-0">
         <div className="max-w-6xl mx-auto flex flex-col gap-8">

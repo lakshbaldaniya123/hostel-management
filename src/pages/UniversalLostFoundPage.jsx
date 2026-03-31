@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 
-export default function StudentLostFoundPage() {
+export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
   const [activeTab, setActiveTab] = useState('board');
   const [items, setItems] = useState([]);
-  const [formData, setFormData] = useState({ type: 'Lost', itemName: '', description: '', location: '', image: null });
+  const [formData, setFormData] = useState({ type: 'Lost', itemName: '', description: '', location: '', image: null, contactName: '', contactNumber: '' });
+
+  const canModerate = fixedRole === 'Warden' || fixedRole === 'Admin';
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -54,12 +56,12 @@ export default function StudentLostFoundPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.itemName || !formData.description) return;
+    if (!formData.itemName || !formData.description || !formData.contactName || !formData.contactNumber) return;
 
     const newItem = {
       id: Date.now(),
-      posterName: 'Shyam',
-      room: '204',
+      posterName: fixedRole === 'Student' ? 'Shyam' : `${fixedRole} (Staff)`,
+      room: fixedRole === 'Student' ? '204' : 'N/A',
       date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       ...formData,
       status: 'Open'
@@ -71,13 +73,28 @@ export default function StudentLostFoundPage() {
 
     localStorage.setItem('lostFoundItems', JSON.stringify(updated));
     setItems(updated);
-    setFormData({ type: 'Lost', itemName: '', description: '', location: '', image: null });
+    setFormData({ type: 'Lost', itemName: '', description: '', location: '', image: null, contactName: '', contactNumber: '' });
     setActiveTab('board');
+  };
+
+  const resolveItem = (id) => {
+    const updated = items.map(item => 
+      item.id === id ? { ...item, status: 'Resolved' } : item
+    );
+    setItems(updated);
+    localStorage.setItem('lostFoundItems', JSON.stringify(updated));
+  };
+
+  const deleteItem = (id) => {
+    if (!window.confirm("Delete this post permanently?")) return;
+    const updated = items.filter(item => item.id !== id);
+    setItems(updated);
+    localStorage.setItem('lostFoundItems', JSON.stringify(updated));
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
-      <Sidebar role="Student" />
+      <Sidebar role={fixedRole} />
       
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto w-full md:w-auto mt-16 md:mt-0">
         <div className="max-w-5xl mx-auto flex flex-col gap-8">
@@ -87,6 +104,7 @@ export default function StudentLostFoundPage() {
               <h1 className="text-3xl font-extrabold tracking-tight mb-2">Lost & Found Bulletin</h1>
               <p className="text-indigo-100 text-sm md:text-base leading-relaxed">
                 A community board to post items you lost or report items you found wandering the hostel.
+                {canModerate && " (Moderator View)"}
               </p>
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3"></div>
@@ -130,14 +148,28 @@ export default function StudentLostFoundPage() {
                         </span>
                         <h3 className="text-xl font-bold text-gray-900 mt-3 mb-1">{item.itemName}</h3>
                         <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-                          {item.date} • {item.posterName} (Room {item.room})
+                          {item.date} • {item.posterName} {item.room !== 'N/A' && `(Room ${item.room})`}
                         </div>
                       </div>
-                      <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                          item.status === 'Resolved' ? 'bg-gray-100 text-gray-400 border-gray-200 border' : 'bg-indigo-100 text-indigo-700'
-                        }`}>
-                          {item.status}
-                      </span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+                            item.status === 'Resolved' ? 'bg-gray-100 text-gray-400 border-gray-200 border' : 'bg-indigo-100 text-indigo-700'
+                          }`}>
+                            {item.status}
+                        </span>
+                        {canModerate && (
+                          <div className="flex gap-2 mt-1">
+                            {item.status === 'Open' && (
+                              <button onClick={() => resolveItem(item.id)} className="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded text-[10px] font-bold hover:bg-green-100">
+                                Resolve
+                              </button>
+                            )}
+                            <button onClick={() => deleteItem(item.id)} className="px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-[10px] font-bold hover:bg-red-100">
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="pl-3 mt-auto">
@@ -149,12 +181,18 @@ export default function StudentLostFoundPage() {
                        <p className="text-sm font-medium text-gray-600 bg-gray-50/50 p-4 rounded-xl border border-gray-100 leading-relaxed mb-4">
                          {item.description}
                        </p>
-                       {item.location && (
+                       <div className="mt-3 flex flex-wrap gap-4 border-t border-gray-100 pt-3">
+                          {item.location && (
+                             <div className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                {item.type === 'Lost' ? 'Lost around: ' : 'Found at: '}{item.location}
+                             </div>
+                          )}
                           <div className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
-                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                             {item.type === 'Lost' ? 'Lost around: ' : 'Found at: '}{item.location}
+                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                             Contact: {item.contactName || item.posterName} ({item.contactNumber || 'N/A'})
                           </div>
-                       )}
+                       </div>
                     </div>
                   </div>
                 ))}
@@ -206,6 +244,31 @@ export default function StudentLostFoundPage() {
                   ></textarea>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Contact Person</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={formData.contactName}
+                      onChange={e => setFormData({...formData, contactName: e.target.value})}
+                      placeholder="e.g. Lakshya B."
+                      className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-indigo-500 focus:ring-0 outline-none transition-colors" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Contact Number</label>
+                    <input 
+                      type="tel" 
+                      required
+                      value={formData.contactNumber}
+                      onChange={e => setFormData({...formData, contactNumber: e.target.value})}
+                      placeholder="e.g. 9876543210"
+                      className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-indigo-500 focus:ring-0 outline-none transition-colors" 
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Location (Optional)</label>
                   <input 
@@ -237,7 +300,7 @@ export default function StudentLostFoundPage() {
                 <div className="pt-4 border-t border-gray-100">
                   <button 
                     type="submit"
-                    disabled={!formData.itemName || !formData.description}
+                    disabled={!formData.itemName || !formData.description || !formData.contactName || !formData.contactNumber}
                     className="w-full bg-gray-900 text-white font-bold py-4 px-4 rounded-xl hover:bg-black transition-all disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-500"
                   >
                     Broadcast to Notice Board

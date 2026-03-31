@@ -68,7 +68,12 @@ export default function WardenLostFoundPage() {
                       
                       <div className="self-center">
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Details</span>
-                        <p className="font-medium text-gray-600 text-sm italic">"{item.description}"</p>
+                        <p className="font-medium text-gray-600 text-sm italic mb-2">"{item.description}"</p>
+                        {item.image && (
+                          <div className="mb-2 rounded-lg overflow-hidden border border-gray-100" style={{ height: '80px', width: '80px' }}>
+                            <img src={item.image} alt="Item" className="w-full h-full object-cover" />
+                          </div>
+                        )}
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2 block">{item.date}</span>
                       </div>
                     </div>

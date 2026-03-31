@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { ComplaintContext } from '../context/ComplaintContext';
 
-export default function WardenComplaintPage() {
+export default function WardenComplaintPage({ fixedRole = "Warden" }) {
   const { complaints, resolveComplaint } = useContext(ComplaintContext);
 
   const [roleFilter, setRoleFilter] = useState('All'); // All, Student, Staff
@@ -16,7 +16,7 @@ export default function WardenComplaintPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
-      <Sidebar role="Warden" />
+      <Sidebar role={fixedRole} />
 
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">

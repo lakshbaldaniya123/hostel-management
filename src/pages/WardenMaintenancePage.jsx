@@ -95,6 +95,11 @@ export default function WardenMaintenancePage() {
                   <span className="text-sm font-semibold text-gray-700">{req.studentName} <span className="text-gray-400 font-normal">({req.studentId})</span></span>
                 </div>
 
+                {req.image && (
+                  <div className="mb-4 rounded-xl overflow-hidden shadow-sm border border-gray-100" style={{ maxHeight: '200px' }}>
+                    <img src={req.image} alt="Issue" className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <p className="text-sm text-gray-600 mb-5 bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
                   "{req.description}"
                 </p>
