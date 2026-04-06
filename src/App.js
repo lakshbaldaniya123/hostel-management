@@ -32,12 +32,16 @@ import StudentGymPage from "./pages/StudentGymPage";
 import WardenGymPage from "./pages/WardenGymPage";
 import UniversalLostFoundPage from "./pages/UniversalLostFoundPage";
 import SecurityGatePassPage from "./pages/SecurityGatePassPage";
+import StudentVendingMachinePage from "./pages/StudentVendingMachinePage";
+import WardenVendingMachinePage from "./pages/WardenVendingMachinePage";
+import ContactUsPage from "./pages/ContactUsPage";
 
 import { LeaveProvider } from "./context/LeaveContext";
 import { HostelProvider } from "./context/HostelContext";
 import { MaintenanceProvider } from "./context/MaintenanceContext";
 import { ComplaintProvider } from "./context/ComplaintContext";
 import { MeetingProvider } from "./context/MeetingContext";
+import SOSButton from "./components/SOSButton";
 
 function App() {
   return (
@@ -47,7 +51,8 @@ function App() {
         <HostelProvider>
           <LeaveProvider>
             <BrowserRouter>
-        <Routes>
+              <SOSButton />
+              <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/warden-dashboard" element={<WardenDashboard />} />
@@ -94,6 +99,10 @@ function App() {
           <Route path="/housekeeper-lost-found" element={<UniversalLostFoundPage fixedRole="Housekeeper" />} />
           <Route path="/warden-lost-found" element={<UniversalLostFoundPage fixedRole="Warden" />} />
           <Route path="/admin-lost-found" element={<UniversalLostFoundPage fixedRole="Admin" />} />
+          <Route path="/student-vending" element={<StudentVendingMachinePage />} />
+          <Route path="/warden-vending" element={<WardenVendingMachinePage />} />
+          <Route path="/student-contact" element={<ContactUsPage role="Student" />} />
+          <Route path="/warden-contact" element={<ContactUsPage role="Warden" />} />
 
           </Routes>
         </BrowserRouter>

@@ -1,3 +1,4 @@
+import React from 'react';
 import Sidebar from '../components/Sidebar';
 
 // Temporary fake data (will come from API later)

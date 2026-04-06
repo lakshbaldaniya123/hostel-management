@@ -50,6 +50,8 @@ export default function MyRoomPage() {
   // States for marking as cleaned by student
   const [isMarkingCleaned, setIsMarkingCleaned] = useState(false);
   const [housekeeperName, setHousekeeperName] = useState('');
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
 
   function handleRequestCleaning() {
     setRequesting(true);
@@ -71,8 +73,8 @@ export default function MyRoomPage() {
 
   function handleConfirmCleaning(e) {
     e.preventDefault();
-    if (!housekeeperName.trim()) {
-      alert("Please enter the housekeeper's name.");
+    if (rating === 0) {
+      alert("Please provide a star rating.");
       return;
     }
 
@@ -92,6 +94,7 @@ export default function MyRoomPage() {
 
     setIsMarkingCleaned(false);
     setHousekeeperName('');
+    setRating(0);
   }
 
   return (
@@ -222,28 +225,59 @@ export default function MyRoomPage() {
                   </div>
 
                   {isMarkingCleaned && (
-                    <form onSubmit={handleConfirmCleaning} className="flex gap-2 mt-2 animate-fade-in">
+                    <form onSubmit={handleConfirmCleaning} className="flex flex-col gap-3 mt-4 animate-fade-in bg-white p-4 rounded-xl border border-gray-200">
+                      <div className="text-sm font-bold text-gray-800 mb-1">Daily Housekeeping Review</div>
+                      
+                      <div className="flex space-x-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            className={`text-2xl transition-transform ${star <= (hover || rating) ? "text-yellow-400 scale-110" : "text-gray-300"}`}
+                            onClick={() => setRating(star)}
+                            onMouseEnter={() => setHover(star)}
+                            onMouseLeave={() => setHover(0)}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+
                       <input 
                         type="text" 
-                        placeholder="Housekeeper's name"
+                        placeholder="Housekeeper's name (Optional)"
                         value={housekeeperName}
                         onChange={(e) => setHousekeeperName(e.target.value)}
-                        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-teal-500"
-                        autoFocus
+                        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-teal-500"
                       />
-                      <button 
-                        type="submit"
-                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors"
-                      >
-                        Confirm
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setIsMarkingCleaned(false)}
-                        className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
+
+                      <textarea
+                        placeholder="Write a review about today's cleaning... (Optional)"
+                        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-teal-500 min-h-[60px] resize-none"
+                      />
+
+                      <div className="flex items-center gap-2">
+                        <label className="flex-1 px-3 py-2.5 border-2 border-dashed border-gray-200 hover:border-teal-400 rounded-lg text-xs font-semibold text-gray-500 hover:text-teal-600 text-center cursor-pointer hover:bg-teal-50 transition-all">
+                          📷 Upload Photo Proof
+                          <input type="file" className="hidden" accept="image/*" />
+                        </label>
+                      </div>
+
+                      <div className="flex gap-2 mt-2">
+                        <button 
+                          type="submit"
+                          className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                        >
+                          Submit Review
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setIsMarkingCleaned(false)}
+                          className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </form>
                   )}
                 </div>
@@ -251,28 +285,59 @@ export default function MyRoomPage() {
                 <div className="flex flex-col gap-3 border border-indigo-100 bg-indigo-50/50 p-4 rounded-xl">
                   <div className="text-sm font-medium text-indigo-800 mb-1">Has the housekeeper finished cleaning?</div>
                   {isMarkingCleaned ? (
-                    <form onSubmit={handleConfirmCleaning} className="flex gap-2 animate-fade-in">
+                    <form onSubmit={handleConfirmCleaning} className="flex flex-col gap-3 mt-2 animate-fade-in bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                      <div className="text-sm font-bold text-indigo-900 mb-1">Daily Housekeeping Review</div>
+                      
+                      <div className="flex space-x-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            className={`text-2xl transition-transform ${star <= (hover || rating) ? "text-yellow-400 scale-110" : "text-gray-300"}`}
+                            onClick={() => setRating(star)}
+                            onMouseEnter={() => setHover(star)}
+                            onMouseLeave={() => setHover(0)}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+
                       <input 
                         type="text" 
-                        placeholder="Housekeeper's name"
+                        placeholder="Housekeeper's name (Optional)"
                         value={housekeeperName}
                         onChange={(e) => setHousekeeperName(e.target.value)}
-                        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
-                        autoFocus
+                        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500"
                       />
-                      <button 
-                        type="submit"
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-                      >
-                        Confirm
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setIsMarkingCleaned(false)}
-                        className="px-3 py-2 bg-indigo-200 hover:bg-indigo-300 text-indigo-800 text-sm font-medium rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
+
+                      <textarea
+                        placeholder="Write a review about today's cleaning... (Optional)"
+                        className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 min-h-[60px] resize-none"
+                      />
+
+                      <div className="flex items-center gap-2">
+                        <label className="flex-1 px-3 py-2.5 border-2 border-dashed border-indigo-200 hover:border-indigo-400 rounded-lg text-xs font-semibold text-indigo-500 hover:text-indigo-700 text-center cursor-pointer hover:bg-indigo-50 transition-all">
+                          📷 Upload Photo Proof
+                          <input type="file" className="hidden" accept="image/*" />
+                        </label>
+                      </div>
+
+                      <div className="flex gap-2 mt-2">
+                        <button 
+                          type="submit"
+                          className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                        >
+                          Submit Review
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setIsMarkingCleaned(false)}
+                          className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-sm font-bold rounded-lg transition-colors border border-indigo-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </form>
                   ) : (
                     <button

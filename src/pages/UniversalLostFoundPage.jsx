@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 
+const logs = [
+  { item: 'Wallet (Black Leather)', finder: 'Lakshya B. (Rm 305)', claimer: 'Roshan M. (Rm 201)', foundTime: '12-Mar-26 10:30 AM', claimedTime: '13-Mar-26 09:15 AM' },
+  { item: 'Casio Calculator', finder: 'Ankit S. (Rm 108)', claimer: 'Priya R. (Rm 214)', foundTime: '15-Mar-26 02:00 PM', claimedTime: '15-Mar-26 05:45 PM' },
+];
+
 export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
   const [activeTab, setActiveTab] = useState('board');
   const [items, setItems] = useState([]);
@@ -110,7 +115,7 @@ export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3"></div>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-2 flex max-w-sm">
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-2 flex max-w-md">
             <button 
               onClick={() => setActiveTab('board')}
               className={`flex-1 py-3 text-sm font-bold rounded-2xl transition-all ${activeTab === 'board' ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
@@ -123,6 +128,14 @@ export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
             >
               Post an Item
             </button>
+            {canModerate && (
+              <button 
+                onClick={() => setActiveTab('reports')}
+                className={`flex-1 py-3 text-sm font-bold rounded-2xl transition-all border-2 ${activeTab === 'reports' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 border-indigo-600' : 'text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 mx-2'}`}
+              >
+                📊 Transaction Logs
+              </button>
+            )}
           </div>
 
           <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-gray-100 transition-shadow">
@@ -307,6 +320,33 @@ export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
                   </button>
                 </div>
               </form>
+            )}
+
+            {activeTab === 'reports' && canModerate && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-gray-100 text-gray-600">
+                    <tr>
+                      <th className="p-4 font-semibold rounded-tl-2xl">Item Claimed</th>
+                      <th className="p-4 font-semibold">Found By</th>
+                      <th className="p-4 font-semibold">Found Timestamp</th>
+                      <th className="p-4 font-semibold">Claimed By</th>
+                      <th className="p-4 font-semibold rounded-tr-2xl">Claimed Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-gray-800">
+                    {logs.map((log, i) => (
+                      <tr key={i} className="hover:bg-indigo-50 transition-colors">
+                        <td className="p-4 font-bold text-indigo-700">{log.item}</td>
+                        <td className="p-4">{log.finder}</td>
+                        <td className="p-4 text-xs font-mono text-gray-500 bg-gray-50/50">{log.foundTime}</td>
+                        <td className="p-4">{log.claimer}</td>
+                        <td className="p-4 text-xs font-mono text-gray-500 bg-gray-50/50">{log.claimedTime}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
             
           </div>

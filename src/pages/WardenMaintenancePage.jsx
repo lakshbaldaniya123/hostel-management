@@ -2,9 +2,18 @@ import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { MaintenanceContext } from '../context/MaintenanceContext';
 
+const reportData = [
+  { item: 'AC Room 101', count: 3, lastIssue: '2026-03-12' },
+  { item: 'WiFi Block A', count: 5, lastIssue: '2026-03-20' },
+  { item: 'Geyser Room 204', count: 2, lastIssue: '2026-02-15' },
+  { item: 'Washing Machine 3', count: 4, lastIssue: '2026-04-01' },
+];
+
 export default function WardenMaintenancePage() {
   const { requests, scheduleRequest, completeRequest } = useContext(MaintenanceContext);
   
+  const [viewMode, setViewMode] = useState('list');
+  const [reportFilter, setReportFilter] = useState('Month');
   const [filterType, setFilterType] = useState('All');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -38,7 +47,7 @@ export default function WardenMaintenancePage() {
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         
         {/* Header */}
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">Hostel Maintenance Center</h1>
             <p className="text-sm text-gray-500 mt-2">
@@ -46,15 +55,29 @@ export default function WardenMaintenancePage() {
             </p>
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+          <button
+            onClick={() => setViewMode(viewMode === 'list' ? 'report' : 'list')}
+            className={`px-8 py-4 rounded-2xl text-lg font-black shadow-xl hover:shadow-2xl hover:scale-105 transition-all border-4 flex items-center gap-3 ${
+              viewMode === 'list' 
+                ? 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-indigo-400' 
+                : 'bg-white text-indigo-700 border-indigo-200 hover:bg-gray-50'
+            }`}
+          >
+            {viewMode === 'list' ? '📊 VIEW ANALYTICS REPORTS' : '⬅ BACK TO COMPLAINTS'}
+          </button>
+        </div>
+
+        {/* Filters */}
+        {viewMode === 'list' && (
+          <div className="flex gap-2 overflow-x-auto pb-6 items-center">
             {['All', 'Pending', 'Scheduled', 'Reschedule Requested', 'Completed'].map(status => (
               <button
                 key={status}
                 onClick={() => setFilterType(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-colors ${
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
                   filterType === status 
-                    ? 'bg-gray-900 text-white shadow-sm' 
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                    ? 'bg-gray-900 text-white shadow-md' 
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 hover:border-gray-300'
                 }`}
               >
                 {status} 
@@ -62,9 +85,62 @@ export default function WardenMaintenancePage() {
               </button>
             ))}
           </div>
-        </div>
+        )}
 
-        {/* Requests Grid */}
+        {/* Analytics Report UI */}
+        {viewMode === 'report' ? (
+          <div>
+            <div className="flex justify-end mb-4">
+              <div className="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
+                {['Month', 'Year'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setReportFilter(f)}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      reportFilter === f ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    {f} Filter
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                <h2 className="text-lg font-semibold text-gray-800">Most Frequent Breakdowns</h2>
+              </div>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 text-sm border-b border-gray-200">
+                    <th className="p-4 font-medium">Asset / Location</th>
+                    <th className="p-4 font-medium">Breakdown Count ({reportFilter})</th>
+                    <th className="p-4 font-medium">Last Reported</th>
+                    <th className="p-4 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {reportData.map((row, i) => (
+                    <tr key={i} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                      <td className="p-4 font-medium text-gray-800">{row.item}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 rounded-full bg-red-100 w-24">
+                            <div className="h-2 rounded-full bg-red-500" style={{ width: `${(row.count / 5) * 100}%` }}></div>
+                          </div>
+                          <span className="text-red-600 font-bold">{row.count} times</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-gray-600">{row.lastIssue}</td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">Needs Replacement</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
           {filteredRequests.length === 0 && (
             <div className="col-span-full py-12 text-center text-gray-400 font-medium">No maintenance complaints in this category.</div>
@@ -150,6 +226,7 @@ export default function WardenMaintenancePage() {
             </div>
           ))}
         </div>
+        )}
       </main>
 
       {/* Scheduling Modal */}

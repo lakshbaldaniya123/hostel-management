@@ -102,8 +102,40 @@ function WardenDashboard() {
               ))}
             </div>
           </div>
-
         </div>
+
+        {/* Housekeeping Aggregated Feedback */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold tracking-tight text-gray-900">Recent Housekeeping Feedback</h2>
+            <div className="bg-green-50 text-green-700 px-3 py-1 rounded-md text-sm font-bold border border-green-100">
+              Avg Rating: 4.2 / 5.0
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { rm: '302', stars: 5, note: 'Very clean, punctual staff.' },
+              { rm: '110', stars: 2, note: 'Missed garbage bin.' },
+              { rm: '205', stars: 4, note: 'Good but late arrival.' },
+            ].map((fb, i) => (
+              <div key={i} className="bg-gray-50 border border-gray-100 p-4 rounded-xl flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-sm font-bold text-gray-800">Room {fb.rm}</span>
+                    <div className="flex text-yellow-400 text-sm">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <span key={j} className={j < fb.stars ? 'opacity-100' : 'opacity-30'}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 italic">"{fb.note}"</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </main>
     </div>
   );
