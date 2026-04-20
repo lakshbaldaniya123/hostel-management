@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
-
-const logs = [
-  { item: 'Wallet (Black Leather)', finder: 'Lakshya B. (Rm 305)', claimer: 'Roshan M. (Rm 201)', foundTime: '12-Mar-26 10:30 AM', claimedTime: '13-Mar-26 09:15 AM' },
-  { item: 'Casio Calculator', finder: 'Ankit S. (Rm 108)', claimer: 'Priya R. (Rm 214)', foundTime: '15-Mar-26 02:00 PM', claimedTime: '15-Mar-26 05:45 PM' },
-];
+import { LostFoundContext } from '../context/LostFoundContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
+  const { items, logs, addItem, resolveItem, deleteItem } = useContext(LostFoundContext);
+  const { currentUser } = useAuth();
+
   const [activeTab, setActiveTab] = useState('board');
-  const [items, setItems] = useState([]);
   const [formData, setFormData] = useState({ type: 'Lost', itemName: '', description: '', location: '', image: null, contactName: '', contactNumber: '' });
 
   const canModerate = fixedRole === 'Warden' || fixedRole === 'Admin';
+  const CURRENT_USER = currentUser?.name || 'Student';
+  const CURRENT_ROOM = currentUser?.roomNo || 'Unassigned';
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -52,49 +53,36 @@ export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
     }
   };
 
-  useEffect(() => {
-    const saved = localStorage.getItem('lostFoundItems');
-    if (saved) {
-      setItems(JSON.parse(saved));
-    }
-  }, []);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.itemName || !formData.description || !formData.contactName || !formData.contactNumber) return;
 
     const newItem = {
       id: Date.now(),
-      posterName: fixedRole === 'Student' ? 'Shyam' : `${fixedRole} (Staff)`,
-      room: fixedRole === 'Student' ? '204' : 'N/A',
-      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      posterName: fixedRole === 'Student' ? CURRENT_USER : `${fixedRole} (Staff)`,
+      room: fixedRole === 'Student' ? CURRENT_ROOM : 'N/A',
+      date: new Date().toLocaleDateString('en-GB'),
       ...formData,
       status: 'Open'
     };
 
-    const savedItems = localStorage.getItem('lostFoundItems');
-    const allItems = savedItems ? JSON.parse(savedItems) : [];
-    const updated = [newItem, ...allItems];
-
-    localStorage.setItem('lostFoundItems', JSON.stringify(updated));
-    setItems(updated);
+    addItem(newItem);
     setFormData({ type: 'Lost', itemName: '', description: '', location: '', image: null, contactName: '', contactNumber: '' });
     setActiveTab('board');
   };
 
-  const resolveItem = (id) => {
-    const updated = items.map(item => 
-      item.id === id ? { ...item, status: 'Resolved' } : item
-    );
-    setItems(updated);
-    localStorage.setItem('lostFoundItems', JSON.stringify(updated));
+  const handleResolve = (id) => {
+    let claimer = null;
+    if (fixedRole === 'Warden' || fixedRole === 'Admin') {
+      claimer = window.prompt("Enter the name of the person claiming this item (for logs):");
+      if (!claimer) return;
+    }
+    resolveItem(id, claimer);
   };
 
-  const deleteItem = (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm("Delete this post permanently?")) return;
-    const updated = items.filter(item => item.id !== id);
-    setItems(updated);
-    localStorage.setItem('lostFoundItems', JSON.stringify(updated));
+    deleteItem(id);
   };
 
   return (
@@ -173,11 +161,11 @@ export default function UniversalLostFoundPage({ fixedRole = "Student" }) {
                         {canModerate && (
                           <div className="flex gap-2 mt-1">
                             {item.status === 'Open' && (
-                              <button onClick={() => resolveItem(item.id)} className="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded text-[10px] font-bold hover:bg-green-100">
+                              <button onClick={() => handleResolve(item.id)} className="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded text-[10px] font-bold hover:bg-green-100">
                                 Resolve
                               </button>
                             )}
-                            <button onClick={() => deleteItem(item.id)} className="px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-[10px] font-bold hover:bg-red-100">
+                            <button onClick={() => handleDelete(item.id)} className="px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-[10px] font-bold hover:bg-red-100">
                               Delete
                             </button>
                           </div>

@@ -1,49 +1,41 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
 export const MeetingContext = createContext();
 
-export const MeetingProvider = ({ children }) => {
-  const [meetings, setMeetings] = useState([
-    {
-      id: 'MTG001',
-      title: 'Hostel Decorum Rules',
-      targetRole: 'Student', // 'Student', 'Housekeeper', 'Security', 'All'
-      description: 'Mandatory meeting to discuss noise levels and updated curfew policies.',
-      date: '2026-03-28',
-      time: '18:00',
-      createdAt: '2026-03-24T10:00:00Z'
-    },
-    {
-      id: 'MTG002',
-      title: 'Monthly Safety Protocol',
-      targetRole: 'Security',
-      description: 'Reviewing modern entry/exit logging processes and dealing with loitering.',
-      date: '2026-03-30',
-      time: '09:00',
-      createdAt: '2026-03-25T14:30:00Z'
-    },
-    {
-      id: 'MTG003',
-      title: 'General Premises Status',
-      targetRole: 'All',
-      description: 'Open floor regarding upcoming holiday closures and utility maintenance.',
-      date: '2026-04-05',
-      time: '19:00',
-      createdAt: '2026-03-26T08:15:00Z'
-    }
-  ]);
+const API_URL = '/api/meetings';
 
-  const scheduleMeeting = ({ title, targetRole, description, date, time }) => {
+export const MeetingProvider = ({ children }) => {
+  const [meetings, setMeetings] = useState([]);
+
+  // Fetch meetings from database on load
+  useEffect(() => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setMeetings(data))
+      .catch(err => console.error("Could not fetch meetings from backend:", err));
+  }, []);
+
+  const scheduleMeeting = async ({ title, targetRole, description, date, time }) => {
     const newMeeting = {
-      id: `MTG00${meetings.length + 1}`,
+      id: `MTG${Date.now()}`,
       title,
       targetRole,
       description,
       date,
       time,
-      createdAt: new Date().toISOString()
     };
-    setMeetings(prev => [newMeeting, ...prev]);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMeeting)
+      });
+      const savedData = await response.json();
+      setMeetings(prev => [savedData, ...prev]);
+    } catch (err) {
+      console.error("Error creating meeting:", err);
+    }
   };
 
   return (

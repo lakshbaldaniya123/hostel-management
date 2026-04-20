@@ -3,8 +3,7 @@ import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
 import WardenDashboard from './pages/WardenDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import MaintenancePage from './pages/MaintenancePage';
-import ComplaintsPage from './pages/ComplaintsPage';
+
 import MyRoomPage from './pages/MyRoomPage';
 import Fees from "./pages/Fees";
 import HousekeeperDashboard from "./pages/HousekeeperDashboard";
@@ -23,6 +22,7 @@ import WardenComplaintPage from "./pages/WardenComplaintPage";
 import SecurityNuisancePage from "./pages/SecurityNuisancePage";
 import UserMeetingsPage from "./pages/UserMeetingsPage";
 import WardenMeetingsPage from "./pages/WardenMeetingsPage";
+import AdminStaffPage from "./pages/AdminStaffPage";
 
 import StudentGatePassPage from "./pages/StudentGatePassPage";
 import WardenGatePassPage from "./pages/WardenGatePassPage";
@@ -35,23 +35,36 @@ import SecurityGatePassPage from "./pages/SecurityGatePassPage";
 import StudentVendingMachinePage from "./pages/StudentVendingMachinePage";
 import WardenVendingMachinePage from "./pages/WardenVendingMachinePage";
 import ContactUsPage from "./pages/ContactUsPage";
-
 import { LeaveProvider } from "./context/LeaveContext";
 import { HostelProvider } from "./context/HostelContext";
 import { MaintenanceProvider } from "./context/MaintenanceContext";
 import { ComplaintProvider } from "./context/ComplaintContext";
 import { MeetingProvider } from "./context/MeetingContext";
+import { GatePassProvider } from "./context/GatePassContext";
+import { FeesProvider } from "./context/FeesContext";
+import { LostFoundProvider } from "./context/LostFoundContext";
+import { AuthProvider } from "./context/AuthContext";
+import { VendingProvider } from "./context/VendingContext";
+import { GymProvider } from "./context/GymContext";
+import { MessProvider } from "./context/MessContext";
 import SOSButton from "./components/SOSButton";
 
 function App() {
   return (
+    <AuthProvider>
     <MeetingProvider>
     <ComplaintProvider>
       <MaintenanceProvider>
         <HostelProvider>
           <LeaveProvider>
-            <BrowserRouter>
-              <SOSButton />
+            <GatePassProvider>
+              <FeesProvider>
+                <LostFoundProvider>
+                  <VendingProvider>
+                    <GymProvider>
+                      <MessProvider>
+                        <BrowserRouter>
+                          <SOSButton />
               <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
@@ -60,6 +73,7 @@ function App() {
           <Route path="/admin-rooms" element={<AdminRoomsPage />} />
           <Route path="/admin-maintenance" element={<AdminMaintenancePage />} />
           <Route path="/admin-fees" element={<AdminFeesPage />} />
+          <Route path="/staff" element={<AdminStaffPage />} />
           <Route path="/housekeeper-dashboard" element={<HousekeeperDashboard />} />
           <Route path="/security-dashboard" element={<SecurityDashboard />} />
           <Route path="/student-maintenance" element={<StudentMaintenancePage />} />
@@ -76,6 +90,7 @@ function App() {
           <Route path="/security-meetings" element={<UserMeetingsPage fixedRole="Security" />} />
           
           <Route path="/warden-meetings" element={<WardenMeetingsPage />} />
+          <Route path="/meetings" element={<WardenMeetingsPage fixedRole="Admin" />} />
           <Route path="/my-room" element={<MyRoomPage />} />
           <Route path="/fees" element={<Fees />} />
           <Route path="/leave" element={<StudentLeavePage />} />
@@ -103,14 +118,20 @@ function App() {
           <Route path="/warden-vending" element={<WardenVendingMachinePage />} />
           <Route path="/student-contact" element={<ContactUsPage role="Student" />} />
           <Route path="/warden-contact" element={<ContactUsPage role="Warden" />} />
-
-          </Routes>
-        </BrowserRouter>
+            </Routes>
+          </BrowserRouter>
+        </MessProvider>
+      </GymProvider>
+      </VendingProvider>
+        </LostFoundProvider>
+        </FeesProvider>
+        </GatePassProvider>
         </LeaveProvider>
       </HostelProvider>
     </MaintenanceProvider>
     </ComplaintProvider>
     </MeetingProvider>
+    </AuthProvider>
   );
 }
 

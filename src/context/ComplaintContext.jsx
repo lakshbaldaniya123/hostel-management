@@ -1,61 +1,74 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
 export const ComplaintContext = createContext();
 
-export const ComplaintProvider = ({ children }) => {
-  const [complaints, setComplaints] = useState([
-    {
-      id: 'CMP001',
-      userType: 'Student',
-      name: 'Lakshya B.',
-      mobile: '+91 9876543210',
-      roomNo: '305',
-      description: 'Loud music from the adjacent room late at night disrupting study time.',
-      status: 'Pending',
-      registeredAt: '2026-03-24T22:30:00Z'
-    },
-    {
-      id: 'CMP002',
-      userType: 'Staff',
-      name: 'Ramesh Singh',
-      mobile: '+91 9988776655',
-      roomNo: null,
-      description: 'Main corridor lights are broken on the 2nd floor, unsafe for night rounds.',
-      status: 'Resolved',
-      registeredAt: '2026-03-25T14:15:00Z'
-    },
-    {
-      id: 'CMP003',
-      userType: 'Security',
-      name: 'Guard Sharma',
-      mobile: '+91 8877665544',
-      roomNo: 'Gate 2',
-      description: 'Found unknown individuals loitering near Block C after curfew hours.',
-      status: 'Pending',
-      registeredAt: new Date(Date.now() - 3600000).toISOString()
-    }
-  ]);
+const API_URL = '/api/complaints';
 
-  const raiseComplaint = ({ userType, name, mobile, roomNo, description }) => {
-    const newComplaint = {
-      id: `CMP00${complaints.length + 1}`,
-      userType,
-      name,
-      mobile,
-      roomNo: userType === 'Student' ? roomNo : null,
+export const ComplaintProvider = ({ children }) => {
+  const [complaints, setComplaints] = useState([]);
+
+  // ── Fetch from backend on mount ─────────────────────────────────────────
+  useEffect(() => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setComplaints(data))
+      .catch(err => console.error('Could not fetch complaints:', err));
+  }, []);
+
+  // ── Raise a new complaint ────────────────────────────────────────────────
+  const raiseComplaint = async ({ userType, name, mobile, roomNo, description, category }) => {
+    const payload = {
+      studentId:   '',
+      studentName: name,
+      roomNo:      userType === 'Student' ? roomNo : (roomNo || null),
+      category:    category || userType || 'General',
       description,
-      status: 'Pending',
-      registeredAt: new Date().toISOString()
+      // Keep legacy fields for pages that read them
+      userType,
+      mobile,
     };
-    setComplaints(prev => [newComplaint, ...prev]);
+    try {
+      const saved = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(r => r.json());
+      setComplaints(prev => [saved, ...prev]);
+    } catch (err) {
+      console.error('Error raising complaint:', err);
+    }
   };
 
-  const resolveComplaint = (id) => {
-    setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: 'Resolved' } : c));
+  // ── Resolve / update complaint ───────────────────────────────────────────
+  const resolveComplaint = async (id, response) => {
+    try {
+      const updated = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Resolved', response: response || '' }),
+      }).then(r => r.json());
+      setComplaints(prev => prev.map(c => c.id === id ? updated : c));
+    } catch (err) {
+      console.error('Error resolving complaint:', err);
+    }
+  };
+
+  // ── Update complaint status generically ─────────────────────────────────
+  const updateComplaintStatus = async (id, status, response) => {
+    try {
+      const updated = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, response: response || '' }),
+      }).then(r => r.json());
+      setComplaints(prev => prev.map(c => c.id === id ? updated : c));
+    } catch (err) {
+      console.error('Error updating complaint:', err);
+    }
   };
 
   return (
-    <ComplaintContext.Provider value={{ complaints, raiseComplaint, resolveComplaint }}>
+    <ComplaintContext.Provider value={{ complaints, raiseComplaint, resolveComplaint, updateComplaintStatus }}>
       {children}
     </ComplaintContext.Provider>
   );

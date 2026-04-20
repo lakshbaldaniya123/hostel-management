@@ -1,50 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
-
-const CURRENT_STUDENT = {
-  name: 'Shyam',
-  roomNo: '204'
-};
+import { GatePassContext } from '../context/GatePassContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function StudentGatePassPage() {
+  const { gatePasses, requestPass } = useContext(GatePassContext);
+  const { currentUser } = useAuth();
+  const studentName = currentUser?.name || 'Student';
+  const roomNo = currentUser?.roomNo || '';
+  
   const [activeTab, setActiveTab] = useState('apply');
   const [outDate, setOutDate] = useState('');
   const [outTime, setOutTime] = useState('');
   const [inDate, setInDate] = useState('');
   const [inTime, setInTime] = useState('');
   const [reason, setReason] = useState('');
-  const [myRequests, setMyRequests] = useState([]);
+  const [destination, setDestination] = useState('');
 
-  useEffect(() => {
-    const saved = localStorage.getItem('gatePassRequests');
-    if (saved) {
-      const allReqs = JSON.parse(saved);
-      setMyRequests(allReqs.filter(r => r.name === CURRENT_STUDENT.name));
-    }
-  }, []);
+  const myRequests = gatePasses.filter(r => r.name === studentName || r.studentName === studentName);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!outDate || !outTime || !inDate || !inTime || !reason) return;
+    if (!outDate || !outTime || !inDate || !inTime || !reason || !destination) return;
 
-    const newReq = {
-      id: Date.now(),
-      name: CURRENT_STUDENT.name,
-      room: CURRENT_STUDENT.roomNo,
-      dates: `${outDate} ${outTime} to ${inDate} ${inTime}`,
+    requestPass(
+      studentName,
+      roomNo,
+      `${outDate} ${outTime} to ${inDate} ${inTime}`,
       reason,
-      status: 'Pending',
-      registeredAt: new Date().toISOString()
-    };
+      currentUser?.hostelId,
+      destination
+    );
 
-    const saved = localStorage.getItem('gatePassRequests');
-    const allReqs = saved ? JSON.parse(saved) : [];
-    const updatedReqs = [newReq, ...allReqs];
-
-    localStorage.setItem('gatePassRequests', JSON.stringify(updatedReqs));
-    setMyRequests([newReq, ...myRequests]);
-    
-    setOutDate(''); setOutTime(''); setInDate(''); setInTime(''); setReason('');
+    setOutDate(''); setOutTime(''); setInDate(''); setInTime(''); setReason(''); setDestination('');
     setActiveTab('history');
   };
 
@@ -131,6 +119,18 @@ export default function StudentGatePassPage() {
                 </div>
 
                 <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Destination</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Where are you going?"
+                    value={destination}
+                    onChange={e => setDestination(e.target.value)}
+                    className="w-full border-2 border-gray-100 rounded-xl p-3.5 text-sm font-semibold focus:border-blue-500 focus:ring-0 outline-none transition-colors mb-6" 
+                  />
+                </div>
+
+                <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Reason</label>
                   <select
                     required
@@ -150,7 +150,7 @@ export default function StudentGatePassPage() {
 
                 <button 
                   type="submit"
-                  disabled={!outDate || !outTime || !inDate || !inTime || !reason}
+                  disabled={!outDate || !outTime || !inDate || !inTime || !reason || !destination}
                   className="w-full bg-gray-900 text-white font-bold py-4 px-4 rounded-xl hover:bg-black transition-all disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-500"
                 >
                   Submit Request

@@ -1,63 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
-
-const DEFAULT_MENU = {
-  Monday: { breakfast: 'Poha + Jalebi', lunch: 'Dal + Rice + Aloo Sabzi', snacks: 'Samosa', dinner: 'Roti + Paneer Butter Masala' },
-  Tuesday: { breakfast: 'Idli + Sambar', lunch: 'Rajma + Chawal', snacks: 'Bread Pakora', dinner: 'Roti + Mix Veg' },
-  Wednesday: { breakfast: 'Aloo Paratha', lunch: 'Kadi + Pakora', snacks: 'Noodles', dinner: 'Roti + Egg Curry / Dal Tadka' },
-  Thursday: { breakfast: 'Upma', lunch: 'Chole + Bhature', snacks: 'Patties', dinner: 'Roti + Bhindi' },
-  Friday: { breakfast: 'Sandwich', lunch: 'Dal Makhani + Rice', snacks: 'Bhel Puri', dinner: 'Roti + Malai Kofta' },
-  Saturday: { breakfast: 'Puri Sabzi', lunch: 'Pulao + Raita', snacks: 'Pav Bhaji', dinner: 'Roti + Chicken / Soya Chaap' },
-  Sunday: { breakfast: 'Masala Dosa', lunch: 'Special Thali', snacks: 'Pastries', dinner: 'Roti + Dal Fry' },
-};
+import { MessContext } from '../context/MessContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function StudentMessPage() {
+  const { weeklyMenu, feedback: allFeedback, submitFeedback } = useContext(MessContext);
+  const { currentUser } = useAuth();
+  
   const [activeTab, setActiveTab] = useState('menu');
   const [activeDay, setActiveDay] = useState('Monday');
-  const [feedback, setFeedback] = useState([]);
-  const [weeklyMenu, setWeeklyMenu] = useState(DEFAULT_MENU);
   const [formData, setFormData] = useState({ meal: 'Breakfast', rating: '5', comment: '' });
 
+  const CURRENT_USER = currentUser?.name || 'Student';
+  const CURRENT_ROOM = currentUser?.roomNo || 'Unassigned';
+
+  // Filter feedback for current user
+  const feedback = allFeedback.filter(f => f.name === CURRENT_USER);
+
   useEffect(() => {
-    // Load Menu
-    const savedMenu = localStorage.getItem('messWeeklyMenu');
-    if (savedMenu) {
-      setWeeklyMenu(JSON.parse(savedMenu));
-    } else {
-      localStorage.setItem('messWeeklyMenu', JSON.stringify(DEFAULT_MENU));
-    }
-
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    if (DEFAULT_MENU[today] || (savedMenu && JSON.parse(savedMenu)[today])) setActiveDay(today);
+    if (today && weeklyMenu && weeklyMenu[today]) setActiveDay(today);
+  }, [weeklyMenu]);
 
-    // Load Feedback
-    const saved = localStorage.getItem('messFeedback');
-    if (saved) {
-      setFeedback(JSON.parse(saved).filter(f => f.name === 'Shyam'));
-    }
-  }, []);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.comment) return;
 
-    const newFeedback = {
-      id: Date.now(),
-      name: 'Shyam',
-      room: '204',
+    await submitFeedback({
+      name: CURRENT_USER,
+      room: CURRENT_ROOM,
       date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       meal: formData.meal,
       rating: formData.rating,
       comment: formData.comment,
       status: 'Unread'
-    };
+    });
 
-    const saved = localStorage.getItem('messFeedback');
-    const allFeedback = saved ? JSON.parse(saved) : [];
-    const updated = [newFeedback, ...allFeedback];
-
-    localStorage.setItem('messFeedback', JSON.stringify(updated));
-    setFeedback([newFeedback, ...feedback]);
     setFormData({ meal: 'Breakfast', rating: '5', comment: '' });
     setActiveTab('history');
   };

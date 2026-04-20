@@ -1,51 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-
-// ── Fake room data ──
-const roomData = {
-  roomNumber: '204',
-  block: 'A',
-  floor: '2nd Floor',
-  type: 'Triple Sharing',
-  status: 'Occupied',
-};
-
-const roommates = [
-  {
-    id: 1,
-    name: 'Roshan Moradiya',
-    rollNumber: 'CE21B001',
-    phone: '+91 98765 43210',
-    department: 'Computer Engineering',
-    avatar: 'RM',
-    avatarColor: 'bg-teal-100 text-teal-700',
-  },
-  {
-    id: 2,
-    name: 'Lakshya Baldaniya',
-    rollNumber: 'CE21B002',
-    phone: '+91 91234 56789',
-    department: 'Computer Engineering',
-    avatar: 'LB',
-    avatarColor: 'bg-indigo-100 text-indigo-700',
-  },
-];
-
-const initialCleaningHistory = [
-  { id: 1, date: 'Today, 8:00 AM', status: 'Cleaned', by: 'Ramesh' },
-  { id: 2, date: 'Yesterday, 9:15 AM', status: 'Cleaned', by: 'Ramesh' },
-  { id: 3, date: '22 Mar, 8:45 AM', status: 'Cleaned', by: 'Suresh' },
-];
+import { HostelContext } from '../context/HostelContext';
+import { useAuth } from '../context/AuthContext';
+import { MaintenanceContext } from '../context/MaintenanceContext';
 
 export default function MyRoomPage() {
   const navigate = useNavigate();
+  const { rooms, students } = useContext(HostelContext);
+  const { currentUser } = useAuth();
+  const { requests, addRequest, updateRequest } = useContext(MaintenanceContext);
 
-  const [cleanStatus, setCleanStatus] = useState('Cleaned');
+  const myStudentId = currentUser?.studentId || currentUser?.hostelId;
+  const myStudentObj = students.find(s => s.studentId === myStudentId) || currentUser;
+  const myRoomNo = myStudentObj?.roomNo || 'Unassigned';
+  
+  const myRoomObj = rooms.find(r => r.roomNo === myRoomNo) || {};
+  
+  const roomData = {
+    roomNumber: myRoomNo,
+    block: myRoomObj.block || '--',
+    floor: myRoomObj.floor ? `${myRoomObj.floor}` : '--',
+    type: myRoomObj.capacity ? `${myRoomObj.capacity} Sharing` : '--',
+    status: myRoomObj.availabilityStatus || '--',
+  };
+
+  const myRoommatesId = myRoomObj.studentIds || [];
+  const roommates = myRoommatesId
+     .filter(id => id !== myStudentId)
+     .map(id => students.find(s => s.studentId === id))
+     .filter(s => s);
+
+  // ── Compute from Database via Context ──
+  const cleaningHistory = requests
+    .filter(r => r.roomNo === myRoomNo && r.issueType === 'Cleaning')
+    .sort((a,b) => new Date(b.registeredAt) - new Date(a.registeredAt));
+
+  const latestReq = cleaningHistory.length > 0 ? cleaningHistory[0] : null;
+
+  let cleanStatus = 'Pending';
+  let lastCleaned = '--';
+
+  if (latestReq) {
+    if (latestReq.status === 'Completed') {
+      cleanStatus = 'Cleaned';
+      lastCleaned = new Date(latestReq.resolvedAt || latestReq.registeredAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
+    } else {
+      cleanStatus = 'Requested';
+      lastCleaned = 'Awaiting Housekeeper';
+    }
+  }
+
+  // ── UI States ──
   const [requesting, setRequesting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [lastCleaned, setLastCleaned] = useState('Today, 8:00 AM');
-  const [cleaningHistory, setCleaningHistory] = useState(initialCleaningHistory);
   
   // States for marking as cleaned by student
   const [isMarkingCleaned, setIsMarkingCleaned] = useState(false);
@@ -53,44 +61,53 @@ export default function MyRoomPage() {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
 
-  function handleRequestCleaning() {
+  async function handleRequestCleaning() {
     setRequesting(true);
-    setTimeout(() => {
-      setRequesting(false);
-      setCleanStatus('Requested');
-      setLastCleaned('Just now — awaiting housekeeper');
+    try {
+      await addRequest({
+        studentId: myStudentObj.studentId || myStudentId,
+        studentName: myStudentObj.name,
+        roomNo: myRoomNo,
+        issueType: 'Cleaning',
+        description: 'Daily Routine Cleaning Requested'
+      });
       setShowSuccess(true);
-      
-      // Add fake request to history
-      setCleaningHistory([
-        { id: Date.now(), date: new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true }), status: 'Requested', by: 'You' },
-        ...cleaningHistory
-      ]);
-
       setTimeout(() => setShowSuccess(false), 4000);
-    }, 1200);
+    } catch (err) {
+      console.error(err);
+    }
+    setRequesting(false);
   }
 
-  function handleConfirmCleaning(e) {
+  async function handleConfirmCleaning(e) {
     e.preventDefault();
     if (rating === 0) {
       alert("Please provide a star rating.");
       return;
     }
 
-    const currentDateTime = new Date().toLocaleString('en-US', { 
-      weekday: 'short', month: 'short', day: 'numeric', 
-      hour: 'numeric', minute: 'numeric', hour12: true 
-    });
-
-    setCleanStatus('Cleaned');
-    setLastCleaned(currentDateTime);
-    
-    // Add real completion to history
-    setCleaningHistory([
-      { id: Date.now(), date: currentDateTime, status: 'Cleaned', by: housekeeperName },
-      ...cleaningHistory
-    ]);
+    try {
+      if (latestReq && latestReq.status !== 'Completed') {
+        await updateRequest(latestReq.id, {
+          status: 'Completed',
+          resolvedAt: new Date().toISOString(),
+          resolvedBy: housekeeperName || 'Housekeeper',
+          feedback: `Rating: ${rating} Stars`
+        });
+      } else {
+        // Explicitly create a manually resolved record
+        await addRequest({
+          studentId: myStudentObj.studentId || myStudentId,
+          studentName: myStudentObj.name,
+          roomNo: myRoomNo,
+          issueType: 'Cleaning',
+          description: 'Student manually logged room as clean.',
+          status: 'Completed'
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
 
     setIsMarkingCleaned(false);
     setHousekeeperName('');
@@ -101,7 +118,7 @@ export default function MyRoomPage() {
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
       <Sidebar role="Student" />
 
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
+      <main className="flex-1 p-8 lg:p-12 overflow-y-auto mt-16 md:mt-0">
         {/* Header */}
         <div className="flex justify-between items-center mb-10">
           <div>
@@ -115,7 +132,7 @@ export default function MyRoomPage() {
           <div className="hidden sm:flex items-center gap-3 bg-teal-50 border border-teal-100 px-4 py-2 rounded-xl">
             <div className="text-right">
               <span className="block text-lg font-bold text-teal-700">Room {roomData.roomNumber}</span>
-              <span className="text-xs text-gray-500">Block {roomData.block} · {roomData.floor}</span>
+              <span className="text-xs text-gray-500">Block {roomData.block} · Floor {roomData.floor}</span>
             </div>
           </div>
         </div>
@@ -356,17 +373,22 @@ export default function MyRoomPage() {
                 {cleaningHistory.map((h, i) => (
                   <div key={h.id} className="flex gap-4">
                     <div className="flex flex-col items-center w-4 mt-1">
-                      <div className={`w-2.5 h-2.5 rounded-full ${h.status === 'Cleaned' ? 'bg-teal-500' : 'bg-indigo-500'}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full ${h.status === 'Completed' ? 'bg-teal-500' : 'bg-indigo-500'}`} />
                       {i < cleaningHistory.length - 1 && <div className="w-px h-full bg-gray-100 mt-1" />}
                     </div>
                     <div className="pb-2">
-                      <div className="text-sm font-medium text-gray-900">{h.date}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                         {new Date(h.registeredAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {h.by} · <span className={h.status === 'Cleaned' ? 'text-teal-600' : 'text-indigo-600'}>{h.status}</span>
+                        {h.resolvedBy || 'Housekeeper'} · <span className={h.status === 'Completed' ? 'text-teal-600' : 'text-indigo-600'}>{h.status === 'Completed' ? 'Cleaned' : 'Requested'}</span>
                       </div>
                     </div>
                   </div>
                 ))}
+                {cleaningHistory.length === 0 && (
+                  <div className="text-gray-400 text-sm italic">No recent cleaning records found.</div>
+                )}
               </div>
             </div>
 
@@ -388,25 +410,28 @@ export default function MyRoomPage() {
               </div>
 
               <div className="space-y-5">
-                {roommates.map((r) => (
-                  <div key={r.id} className="flex gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold ${r.avatarColor}`}>
-                      {r.avatar}
+                {roommates.length === 0 && (
+                  <div className="text-center py-8 text-gray-400 font-medium">No roommates assigned.</div>
+                )}
+                {roommates.map((r, idx) => (
+                  <div key={r.studentId || idx} className="flex gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold bg-teal-100 text-teal-700`}>
+                      {r.name ? r.name.substring(0, 2).toUpperCase() : 'RM'}
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-bold text-gray-900">{r.name}</div>
-                      <div className="text-xs text-teal-600 font-medium mb-3">{r.department}</div>
+                      <div className="text-sm font-bold text-gray-900">{r.name || 'Unknown'}</div>
+                      <div className="text-xs text-teal-600 font-medium mb-3">{r.department || 'General'}</div>
                       
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 text-xs">
                           <svg className="text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><circle cx="9" cy="14" r="2"/><path d="M15 11h2"/><path d="M15 15h2"/></svg>
-                          <span className="text-gray-500">Roll No:</span>
-                          <span className="font-semibold text-gray-800">{r.rollNumber}</span>
+                          <span className="text-gray-500">Student ID:</span>
+                          <span className="font-semibold text-gray-800">{r.studentId || r.hostelId || '--'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs">
                           <svg className="text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6.06 6.06l.98-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                           <span className="text-gray-500">Phone:</span>
-                          <span className="font-semibold text-gray-800">{r.phone}</span>
+                          <span className="font-semibold text-gray-800">{r.phone || '--'}</span>
                         </div>
                       </div>
                     </div>
@@ -414,8 +439,6 @@ export default function MyRoomPage() {
                 ))}
               </div>
             </div>
-
-
 
           </div>
         </div>

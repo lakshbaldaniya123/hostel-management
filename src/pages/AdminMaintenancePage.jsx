@@ -1,47 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
+import { MaintenanceContext } from '../context/MaintenanceContext';
 
 export default function AdminMaintenancePage() {
+  const { requests } = useContext(MaintenanceContext);
   
-  const maintenanceRequests = [
-    {
-      id: 'MR-001',
-      priority: 'High',
-      priorityColor: 'bg-[#dc2626] text-white',
-      status: 'In Progress',
-      statusColor: 'bg-[#f3f4f6] text-[#4b5563]',
-      issue: 'Plumbing leak in bathroom',
-      assigned: 'Maintenance Team A',
-      room: 'B-205',
-      reporter: 'Priya Patel',
-      date: '2026-03-20',
-    },
-    {
-      id: 'MR-002',
-      priority: 'Medium',
-      priorityColor: 'bg-white text-[#4b5563] border border-gray-200',
-      status: 'Pending',
-      statusColor: 'bg-white text-[#4b5563] border border-gray-200',
-      issue: 'AC not cooling properly',
-      assigned: '-',
-      room: 'A-101',
-      reporter: 'Rahul Sharma',
-      date: '2026-03-19',
-    },
-    {
-      id: 'MR-003',
-      priority: 'Low',
-      priorityColor: 'bg-white text-[#4b5563] border border-gray-200',
-      status: 'Resolved',
-      statusColor: 'bg-[#2a7a85] text-white',
-      issue: 'Broken window glass',
-      assigned: 'Maintenance Team B',
-      room: 'C-312',
-      reporter: 'System',
-      date: '2026-03-18',
-    }
-  ];
+  const total = requests.length;
+  const pending = requests.filter(r => r.status === 'Pending').length;
+  const inProgress = requests.filter(r => r.status === 'Scheduled' || r.status === 'Reschedule Requested').length;
+  const resolved = requests.filter(r => r.status === 'Completed').length;
 
   return (
     <div className="flex bg-white font-sans text-gray-800" style={{ height: '100vh', overflow: 'hidden' }}>
@@ -62,7 +30,7 @@ export default function AdminMaintenancePage() {
                 </svg>
                 <span className="text-[#6b7280] font-medium text-[15px]">Total</span>
               </div>
-              <div className="text-3xl font-bold text-[#1f2937]">48</div>
+              <div className="text-3xl font-bold text-[#1f2937]">{total}</div>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
@@ -72,7 +40,7 @@ export default function AdminMaintenancePage() {
                 </svg>
                 <span className="text-[#6b7280] font-medium text-[15px]">Pending</span>
               </div>
-              <div className="text-3xl font-bold text-[#f59e0b]">12</div>
+              <div className="text-3xl font-bold text-[#f59e0b]">{pending}</div>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
@@ -82,7 +50,7 @@ export default function AdminMaintenancePage() {
                 </svg>
                 <span className="text-[#6b7280] font-medium text-[15px]">In Progress</span>
               </div>
-              <div className="text-3xl font-bold text-[#3b82f6]">8</div>
+              <div className="text-3xl font-bold text-[#3b82f6]">{inProgress}</div>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
@@ -92,7 +60,7 @@ export default function AdminMaintenancePage() {
                 </svg>
                 <span className="text-[#6b7280] font-medium text-[15px]">Resolved</span>
               </div>
-              <div className="text-3xl font-bold text-[#10b981]">28</div>
+              <div className="text-3xl font-bold text-[#10b981]">{resolved}</div>
             </div>
           </div>
 
@@ -100,28 +68,32 @@ export default function AdminMaintenancePage() {
             <h2 className="text-[19px] font-bold text-[#1f2937] mb-6">All Requests</h2>
             
             <div className="flex flex-col gap-4">
-              {maintenanceRequests.map((req, idx) => (
-                <div key={idx} className="border border-gray-100 rounded-[12px] p-5 shadow-sm bg-white hover:border-gray-200 transition-colors">
+              {requests.map((req) => (
+                <div key={req.id} className="border border-gray-100 rounded-[12px] p-5 shadow-sm bg-white hover:border-gray-200 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-3">
                       <span className="text-[15px] font-bold text-[#1f2937]">{req.id}</span>
-                      <span className={`text-[11px] font-bold px-[10px] py-[3px] rounded-full ${req.priorityColor}`}>
-                        {req.priority}
+                      <span className={`text-[11px] font-bold px-[10px] py-[3px] rounded-full bg-white text-[#4b5563] border border-gray-200`}>
+                        {req.issueType}
                       </span>
-                      <span className={`text-[11px] font-bold px-[10px] py-[3px] rounded-full ${req.statusColor}`}>
+                      <span className={`text-[11px] font-bold px-[10px] py-[3px] rounded-full ${
+                        req.status === 'Completed' ? 'bg-[#2a7a85] text-white' : 
+                        req.status === 'Pending' ? 'bg-white text-[#4b5563] border border-gray-200' :
+                        'bg-[#f3f4f6] text-[#4b5563]'
+                      }`}>
                         {req.status}
                       </span>
                     </div>
                     <div className="text-[13px] text-gray-500">
-                      Assigned: {req.assigned}
+                      Assigned: {req.status === 'Scheduled' ? 'Maintenance Team' : 'Pending Warden'}
                     </div>
                   </div>
                   
                   <div className="text-[15px] text-[#374151] mb-1">
-                    {req.issue}
+                    {req.description}
                   </div>
                   <div className="text-[13px] text-gray-400">
-                    Room {req.room} • Reported by {req.reporter} • {req.date}
+                    Room {req.roomNo} • Reported by {req.studentName} • {new Date(req.registeredAt).toLocaleDateString()}
                   </div>
                 </div>
               ))}

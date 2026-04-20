@@ -1,16 +1,20 @@
 import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { MaintenanceContext } from '../context/MaintenanceContext';
-
-// Current logged in student mock profile
-const CURRENT_STUDENT = {
-  id: 'STU004',
-  name: 'Priya R.',
-  roomNo: '214'
-};
+import { useAuth } from '../context/AuthContext';
+import { HostelContext } from '../context/HostelContext';
 
 export default function StudentMaintenancePage() {
-  const { requests, addRequest, rejectSchedule } = useContext(MaintenanceContext);
+  const { requests, addRequest, rejectSchedule, completeRequest } = useContext(MaintenanceContext);
+  const { currentUser } = useAuth();
+  const { students } = useContext(HostelContext);
+  
+  const studentId   = currentUser?.hostelId || currentUser?.studentId || 'STU-GUEST';
+  const studentName = currentUser?.name || 'Student';
+  
+  // Try to find the user in HostelContext to get their assigned room, otherwise fallback to Auth, then fallback to 'Unknown'
+  const matchedStudent = students.find(s => s.studentId === studentId);
+  const roomNo = matchedStudent?.roomNo || currentUser?.roomNo || 'Unassigned';
   
   const [issueType, setIssueType] = useState('Electrical');
   const [description, setDescription] = useState('');
@@ -52,12 +56,12 @@ export default function StudentMaintenancePage() {
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectReason, setRejectReason] = useState('I will be in class');
 
-  const myRequests = requests.filter(req => req.studentId === CURRENT_STUDENT.id);
+  const myRequests = requests.filter(req => req.studentId === studentId);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!description.trim()) return;
-    addRequest(CURRENT_STUDENT.id, CURRENT_STUDENT.name, CURRENT_STUDENT.roomNo, issueType, description, image);
+    addRequest(studentId, studentName, roomNo, issueType, description, image);
     setDescription('');
     setIssueType('Electrical');
     setImage(null);
@@ -81,7 +85,7 @@ export default function StudentMaintenancePage() {
             <div className="relative z-10 w-full md:w-2/3">
               <h1 className="text-3xl font-extrabold tracking-tight mb-2">Maintenance Hub</h1>
               <p className="text-indigo-100 text-sm md:text-base leading-relaxed">
-                Log complaints instantly to have hostel staff resolve issues in Room {CURRENT_STUDENT.roomNo}. Check below to see scheduled repair times and updates.
+                Log complaints instantly to have hostel staff resolve issues in Room {roomNo || 'your room'}. Check below to see scheduled repair times and updates.
               </p>
             </div>
             {/* Background design */}
@@ -222,12 +226,20 @@ export default function StudentMaintenancePage() {
                             </p>
                           </div>
                         </div>
-                        <button 
-                          onClick={() => setRejectingId(req.id)}
-                          className="w-full sm:w-auto px-5 py-2.5 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200 rounded-xl text-xs font-bold transition-all whitespace-nowrap"
-                        >
-                          Reject Time
-                        </button>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          <button 
+                            onClick={() => setRejectingId(req.id)}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200 rounded-xl text-xs font-bold transition-all whitespace-nowrap"
+                          >
+                            Reject Time
+                          </button>
+                          <button 
+                            onClick={() => completeRequest(req.id)}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-green-500 text-white hover:bg-green-600 rounded-xl text-xs font-bold transition-all shadow-sm whitespace-nowrap"
+                          >
+                            Confirm Done
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -274,7 +286,7 @@ export default function StudentMaintenancePage() {
             <div className="p-6">
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Reason for rejection</label>
               <div className="space-y-3">
-                {['I will be in class', 'Not comfortable with this time', 'I am on leave'].map(r => (
+                {['I will be in class', 'Not comfortable with this time', 'I am on leave', 'Issue was not resolved properly'].map(r => (
                   <label key={r} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${rejectReason === r ? 'border-indigo-600 bg-indigo-50/50' : 'border-gray-100 hover:border-gray-200 active:bg-gray-50'}`}>
                     <input type="radio" name="reason" className="hidden" checked={rejectReason === r} onChange={() => setRejectReason(r)} />
                     <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${rejectReason === r ? 'border-indigo-600' : 'border-gray-300'}`}>

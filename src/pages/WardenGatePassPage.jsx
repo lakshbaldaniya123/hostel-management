@@ -1,27 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import Sidebar from '../components/Sidebar';
+import { GatePassContext } from '../context/GatePassContext';
 
-export default function WardenGatePassPage() {
-  const [requests, setRequests] = useState([]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('gatePassRequests');
-    if (saved) {
-      setRequests(JSON.parse(saved));
-    }
-  }, []);
-
-  const updateRequestStatus = (id, newStatus) => {
-    const updated = requests.map(req => 
-      req.id === id ? { ...req, status: newStatus } : req
-    );
-    setRequests(updated);
-    localStorage.setItem('gatePassRequests', JSON.stringify(updated));
-  };
+export default function WardenGatePassPage({ fixedRole }) {
+  const { gatePasses, approvePass, rejectPass } = useContext(GatePassContext);
+  
+  // Sort requests to show pending first, then others
+  const requests = [...gatePasses].sort((a, b) => {
+    if (a.status === 'Pending' && b.status !== 'Pending') return -1;
+    if (a.status !== 'Pending' && b.status === 'Pending') return 1;
+    return new Date(b.registeredAt) - new Date(a.registeredAt);
+  });
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
-      <Sidebar role="Warden" />
+      <Sidebar role={fixedRole || "Warden"} />
       
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto w-full md:w-auto mt-16 md:mt-0">
         <div className="max-w-6xl mx-auto flex flex-col gap-8">
@@ -37,7 +30,7 @@ export default function WardenGatePassPage() {
           </div>
 
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-10">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Pending Leave Requests</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Pending Gate Pass Requests</h2>
             
             <div className="space-y-4">
               {requests.length === 0 ? (
@@ -51,8 +44,8 @@ export default function WardenGatePassPage() {
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-bold text-gray-900 text-lg">{req.name}</h4>
-                          <span className="text-xs font-black text-gray-400 uppercase tracking-widest mt-0.5 block">Room: {req.room}</span>
+                          <h4 className="font-bold text-gray-900 text-lg">{req.studentName || req.name || 'Unknown Student'}</h4>
+                          <span className="text-xs font-black text-gray-400 uppercase tracking-widest mt-0.5 block">Room: {req.roomNo || req.room || 'N/A'}</span>
                         </div>
                         <span className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest ${
                           req.status === 'Approved' ? 'bg-green-100 text-green-700' : 
@@ -66,26 +59,26 @@ export default function WardenGatePassPage() {
                       <div className="grid grid-cols-2 gap-4 my-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                          <div>
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Destination</span>
-                            <span className="text-sm font-semibold text-gray-800">{req.destination}</span>
+                            <span className="text-sm font-semibold text-gray-800">{req.destination || 'Not Specified'}</span>
                          </div>
                          <div>
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Dates</span>
-                            <span className="text-sm font-semibold text-gray-800">{req.dates}</span>
+                            <span className="text-sm font-semibold text-gray-800">{req.dates || req.exitTime || 'Not Specified'}</span>
                          </div>
                       </div>
 
                       <p className="text-sm font-medium text-gray-600 bg-white italic border-l-4 border-indigo-500 pl-3 py-1">
-                        "{req.reason}"
+                        "{req.purpose || req.reason || 'No purpose specified'}"
                       </p>
                     </div>
 
                     <div className="flex md:flex-col gap-3 w-full md:w-32 shrink-0 border-t border-gray-100 md:border-0 pt-4 md:pt-0">
                       {req.status === 'Pending' ? (
                         <>
-                          <button onClick={() => updateRequestStatus(req.id, 'Approved')} className="flex-1 px-4 py-3 bg-green-50 text-green-700 rounded-xl text-xs font-bold hover:bg-green-100 transition-colors border border-green-200">
+                          <button onClick={() => approvePass(req.id)} className="flex-1 px-4 py-3 bg-green-50 text-green-700 rounded-xl text-xs font-bold hover:bg-green-100 transition-colors border border-green-200">
                             Approve
                           </button>
-                          <button onClick={() => updateRequestStatus(req.id, 'Rejected')} className="flex-1 px-4 py-3 bg-red-50 text-red-700 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors border border-red-200">
+                          <button onClick={() => rejectPass(req.id)} className="flex-1 px-4 py-3 bg-red-50 text-red-700 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors border border-red-200">
                             Reject
                           </button>
                         </>

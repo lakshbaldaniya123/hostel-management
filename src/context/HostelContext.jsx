@@ -1,120 +1,161 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
 export const HostelContext = createContext();
 
+const API = '/api';
+
 export const HostelProvider = ({ children }) => {
-  const [students, setStudents] = useState([
-    { 
-      studentId: 'STU001', name: 'Rahul Sharma', email: 'rahul@example.com', phone: '+91 9876543210', 
-      course: 'B.Tech IT', roomNo: 'A-101', status: 'In Hostel', parentName: 'Mr. Sharma', 
-      parentPhone: '+91 9988776655', feesStatus: 'Paid', 
-      entryExitLogs: [] 
-    },
-    { 
-      studentId: 'STU002', name: 'Deepak Verma', email: 'deepak@example.com', phone: '+91 9876543211', 
-      course: 'B.Tech CS', roomNo: 'A-101', status: 'In Hostel', parentName: 'Mr. Verma', 
-      parentPhone: '+91 9988776644', feesStatus: 'Pending', 
-      entryExitLogs: [] 
-    },
-    { 
-      studentId: 'STU003', name: 'Sneha Reddy', email: 'sneha@example.com', phone: '+91 9876543212', 
-      course: 'B.Tech CE', roomNo: 'A-102', status: 'In Hostel', parentName: 'Mr. Reddy', 
-      parentPhone: '+91 9988776633', feesStatus: 'Paid', 
-      entryExitLogs: [] 
-    },
-    { 
-      studentId: 'STU004', name: 'Priya Patel', email: 'priya@example.com', phone: '+91 9876543213', 
-      course: 'B.Sc Physics', roomNo: 'B-205', status: 'In Hostel', parentName: 'Mr. Patel', 
-      parentPhone: '+91 9988776622', feesStatus: 'Paid', 
-      entryExitLogs: [] 
-    },
-    { 
-      studentId: 'STU005', name: 'Anita Singh', email: 'anita@example.com', phone: '+91 9876543214', 
-      course: 'B.Tech EE', roomNo: 'B-205', status: 'In Hostel', parentName: 'Mr. Singh', 
-      parentPhone: '+91 9988776611', feesStatus: 'Pending', 
-      entryExitLogs: [] 
-    },
-    { 
-      studentId: 'STU006', name: 'Ananya Gupta', email: 'ananya@example.com', phone: '+91 9876543215', 
-      course: 'B.Tech ME', roomNo: 'D-401', status: 'In Hostel', parentName: 'Mr. Gupta', 
-      parentPhone: '+91 9988776600', feesStatus: 'Paid', 
-      entryExitLogs: [] 
-    },
-  ]);
+  const [students, setStudents] = useState([]);
+  const [rooms, setRooms] = useState([]);
 
-  const [rooms, setRooms] = useState([
-    { roomNo: 'A-101', capacity: 2, occupants: 2, availabilityStatus: 'Full', studentIds: ['STU001', 'STU002'], block: 'A', type: 'Double' },
-    { roomNo: 'A-102', capacity: 1, occupants: 1, availabilityStatus: 'Full', studentIds: ['STU003'], block: 'A', type: 'Single' },
-    { roomNo: 'A-103', capacity: 2, occupants: 0, availabilityStatus: 'Available', studentIds: [], block: 'A', type: 'Double' },
-    { roomNo: 'B-205', capacity: 3, occupants: 2, availabilityStatus: 'Available', studentIds: ['STU004', 'STU005'], block: 'B', type: 'Triple' },
-    { roomNo: 'C-312', capacity: 2, occupants: 0, availabilityStatus: 'Maintenance', studentIds: [], block: 'C', type: 'Double' },
-    { roomNo: 'D-401', capacity: 1, occupants: 1, availabilityStatus: 'Full', studentIds: ['STU006'], block: 'D', type: 'Single' },
-    // A few old ones to preserve existing structure for other pages if needed
-    { roomNo: '108', capacity: 2, occupants: 0, availabilityStatus: 'Available', studentIds: [], block: 'A', type: 'Double' },
-    { roomNo: '201', capacity: 3, occupants: 0, availabilityStatus: 'Available', studentIds: [], block: 'B', type: 'Triple' },
-  ]);
+  // ── Fetch from backend on mount ─────────────────────────────────────────
+  useEffect(() => {
+    fetch(`${API}/students`)
+      .then(res => res.json())
+      .then(data => setStudents(data))
+      .catch(err => console.error('Could not fetch students:', err));
 
-  const allocateStudentToRoom = (studentId, newRoomNo) => {
-    const student = students.find(s => s.studentId === studentId);
-    if (!student) return;
-    const oldRoomNo = student.roomNo;
-    
-    setRooms(prevRooms => prevRooms.map(r => {
-      let rCopy = { ...r, studentIds: [...r.studentIds] };
-      // Remove from old room
-      if (rCopy.roomNo === oldRoomNo) {
-        rCopy.studentIds = rCopy.studentIds.filter(id => id !== studentId);
-        rCopy.occupants = rCopy.studentIds.length;
-        if (rCopy.availabilityStatus !== 'Maintenance') {
-          rCopy.availabilityStatus = rCopy.occupants >= rCopy.capacity ? 'Full' : 'Available';
-        }
-      }
-      // Add to new room
-      if (rCopy.roomNo === newRoomNo) {
-        if (!rCopy.studentIds.includes(studentId)) {
-          rCopy.studentIds.push(studentId);
-        }
-        rCopy.occupants = rCopy.studentIds.length;
-        if (rCopy.availabilityStatus !== 'Maintenance') {
-          rCopy.availabilityStatus = rCopy.occupants >= rCopy.capacity ? 'Full' : 'Available';
-        }
-      }
-      return rCopy;
-    }));
+    fetch(`${API}/rooms`)
+      .then(res => res.json())
+      .then(data => setRooms(data))
+      .catch(err => console.error('Could not fetch rooms:', err));
+  }, []);
 
-    setStudents(prev => prev.map(s => s.studentId === studentId ? { ...s, roomNo: newRoomNo } : s));
+  // ── Helpers to sync two rooms at once ───────────────────────────────────
+  const _patchRoom = async (roomNo, body) => {
+    const res = await fetch(`${API}/rooms/${encodeURIComponent(roomNo)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
   };
 
-  const removeStudentFromRoom = (studentId) => {
+  // ── Allocate student to a new room ──────────────────────────────────────
+  const allocateStudentToRoom = async (studentId, newRoomNo) => {
     const student = students.find(s => s.studentId === studentId);
     if (!student) return;
     const oldRoomNo = student.roomNo;
 
-    setRooms(prevRooms => prevRooms.map(r => {
-      let rCopy = { ...r, studentIds: [...r.studentIds] };
-      if (rCopy.roomNo === oldRoomNo) {
-        rCopy.studentIds = rCopy.studentIds.filter(id => id !== studentId);
-        rCopy.occupants = rCopy.studentIds.length;
-        if (rCopy.availabilityStatus !== 'Maintenance') {
-          rCopy.availabilityStatus = rCopy.occupants >= rCopy.capacity ? 'Full' : 'Available';
-        }
-      }
-      return rCopy;
-    }));
+    try {
+      // Update student record
+      const updatedStudent = await fetch(`${API}/students/${studentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomNo: newRoomNo }),
+      }).then(r => r.json());
 
-    setStudents(prev => prev.map(s => s.studentId === studentId ? { ...s, roomNo: 'Unassigned' } : s));
+      // Update old room — remove student
+      const oldRoom = rooms.find(r => r.roomNo === oldRoomNo);
+      if (oldRoom) {
+        const newIds = oldRoom.studentIds.filter(id => id !== studentId);
+        const updatedOld = await _patchRoom(oldRoomNo, {
+          studentIds: newIds,
+          occupants: newIds.length,
+          availabilityStatus: oldRoom.availabilityStatus === 'Maintenance'
+            ? 'Maintenance'
+            : newIds.length >= oldRoom.capacity ? 'Full' : 'Available',
+        });
+        setRooms(prev => prev.map(r => r.roomNo === oldRoomNo ? updatedOld : r));
+      }
+
+      // Update new room — add student
+      const newRoom = rooms.find(r => r.roomNo === newRoomNo);
+      if (newRoom) {
+        const newIds = newRoom.studentIds.includes(studentId)
+          ? newRoom.studentIds
+          : [...newRoom.studentIds, studentId];
+        const updatedNew = await _patchRoom(newRoomNo, {
+          studentIds: newIds,
+          occupants: newIds.length,
+          availabilityStatus: newRoom.availabilityStatus === 'Maintenance'
+            ? 'Maintenance'
+            : newIds.length >= newRoom.capacity ? 'Full' : 'Available',
+        });
+        setRooms(prev => prev.map(r => r.roomNo === newRoomNo ? updatedNew : r));
+      }
+
+      setStudents(prev => prev.map(s => s.studentId === studentId ? updatedStudent : s));
+    } catch (err) {
+      console.error('Error allocating student to room:', err);
+    }
   };
 
-  const updateStudentDetails = (studentId, newDetails) => {
-    // We intentionally ignore roomNo in general details updates to preserve workflow
-    // Only allocateStudentToRoom should push room changes
-    setStudents(prev => prev.map(s => s.studentId === studentId ? { ...s, ...newDetails, roomNo: s.roomNo } : s));
+  // ── Remove student from room ─────────────────────────────────────────────
+  const removeStudentFromRoom = async (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    if (!student) return;
+    const oldRoomNo = student.roomNo;
+
+    try {
+      const updatedStudent = await fetch(`${API}/students/${studentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomNo: 'Unassigned' }),
+      }).then(r => r.json());
+
+      const oldRoom = rooms.find(r => r.roomNo === oldRoomNo);
+      if (oldRoom) {
+        const newIds = oldRoom.studentIds.filter(id => id !== studentId);
+        const updatedOld = await _patchRoom(oldRoomNo, {
+          studentIds: newIds,
+          occupants: newIds.length,
+          availabilityStatus: oldRoom.availabilityStatus === 'Maintenance'
+            ? 'Maintenance'
+            : newIds.length >= oldRoom.capacity ? 'Full' : 'Available',
+        });
+        setRooms(prev => prev.map(r => r.roomNo === oldRoomNo ? updatedOld : r));
+      }
+
+      setStudents(prev => prev.map(s => s.studentId === studentId ? updatedStudent : s));
+    } catch (err) {
+      console.error('Error removing student from room:', err);
+    }
+  };
+
+  // ── Update student details ───────────────────────────────────────────────
+  const updateStudentDetails = async (studentId, newDetails) => {
+    try {
+      const { roomNo: _ignored, ...safeDetails } = newDetails;
+      const updatedStudent = await fetch(`${API}/students/${studentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(safeDetails),
+      }).then(r => r.json());
+      setStudents(prev => prev.map(s => s.studentId === studentId ? updatedStudent : s));
+    } catch (err) {
+      console.error('Error updating student details:', err);
+    }
+  };
+
+  // ── Enroll a brand-new student (Admin only) ──────────────────────────────
+  const enrollStudent = async (formData) => {
+    const res = await fetch(`${API}/students/enroll`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Enrollment failed');
+
+    // Update local state immediately — no need to refetch
+    setStudents(prev => [...prev, data.student]);
+    setRooms(prev => prev.map(r =>
+      r.roomNo === data.assignedRoom
+        ? { ...r,
+            occupants:  r.occupants + 1,
+            studentIds: [...r.studentIds, data.student.studentId],
+            availabilityStatus: (r.occupants + 1) >= r.capacity ? 'Full' : 'Available',
+          }
+        : r
+    ));
+    return data; // { student, assignedRoom, loginId, password, message }
   };
 
   return (
-    <HostelContext.Provider value={{ 
-      students, rooms, 
-      allocateStudentToRoom, removeStudentFromRoom, updateStudentDetails 
+    <HostelContext.Provider value={{
+      students, rooms,
+      allocateStudentToRoom, removeStudentFromRoom, updateStudentDetails, enrollStudent,
     }}>
       {children}
     </HostelContext.Provider>

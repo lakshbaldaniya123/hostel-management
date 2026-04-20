@@ -29,13 +29,12 @@ export default function AdminRoomsPage() {
           {/* Block Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {blocks.map(block => {
-              const dummyMap = {
-                A: { o: 118, t: 125, v: 4, m: 3 },
-                B: { o: 120, t: 125, v: 4, m: 1 },
-                C: { o: 110, t: 125, v: 10, m: 5 },
-                D: { o: 108, t: 125, v: 15, m: 2 }
-              };
-              const d = dummyMap[block];
+              const blockRooms = rooms.filter(r => r.block === block);
+              const t = blockRooms.reduce((acc, r) => acc + (r.capacity || 2), 0) || 50; // Fallback to 50 if no rooms
+              const o = blockRooms.reduce((acc, r) => acc + (r.occupants || 0), 0) || 0;
+              const m = blockRooms.filter(r => r.availabilityStatus === 'Maintenance').length || 0;
+              const v = Math.max(0, t - o - m);
+              const d = { o, t, v, m };
               
               return (
                 <div key={block} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col">

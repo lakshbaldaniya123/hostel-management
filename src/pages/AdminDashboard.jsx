@@ -1,21 +1,40 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
+import { HostelContext } from '../context/HostelContext';
+import { FeesContext } from '../context/FeesContext';
+import { ComplaintContext } from '../context/ComplaintContext';
 
 export default function AdminDashboard() {
+  const { students, rooms } = useContext(HostelContext);
+  const { feeRecords } = useContext(FeesContext);
+  const { complaints } = useContext(ComplaintContext);
+
+  const totalStudents = students.length;
+  // Use length of students added this month for the "trend" if we had dates, but we just use total for now
+  
+  const availableRooms = rooms.filter(r => r.availabilityStatus === 'Available').length;
+  const totalOccupants = rooms.reduce((acc, r) => acc + (r.occupants || 0), 0);
+  const totalCapacity = rooms.reduce((acc, r) => acc + (r.capacity || 0), 0);
+  const occupancyRate = totalCapacity ? ((totalOccupants / totalCapacity) * 100).toFixed(0) : 0;
+
+  const totalDues = feeRecords.reduce((acc, r) => acc + (r.pendingFees || 0), 0);
+  const formattedDues = totalDues >= 100000 ? `₹${(totalDues/100000).toFixed(1)}L` : `₹${totalDues.toLocaleString()}`;
+  const overdueCount = feeRecords.filter(r => r.status === 'Overdue').length;
+
+  const activeComplaints = complaints.filter(c => c.status !== 'Resolved').length;
+  const pendingComplaints = complaints.filter(c => c.status === 'Pending').length;
 
   const quickStats = [
-    { label: 'Total Students', value: '1,248', trend: '+12 this month', icon: '👨‍🎓', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Available Rooms', value: '42', trend: '85% Occupancy', icon: '🏨', color: 'text-teal-600', bg: 'bg-teal-50' },
-    { label: 'Pending Dues', value: '₹4.2L', trend: '12 Overdue', icon: '💳', color: 'text-orange-600', bg: 'bg-orange-50' },
-    { label: 'Active Complaints', value: '15', trend: '5 High Priority', icon: '⚠️', color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Total Students', value: totalStudents.toString(), trend: 'Active Enrollments', icon: '👨‍🎓', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Available Rooms', value: availableRooms.toString(), trend: `${occupancyRate}% Occupancy`, icon: '🏨', color: 'text-teal-600', bg: 'bg-teal-50' },
+    { label: 'Pending Dues', value: formattedDues, trend: `${overdueCount} Overdue`, icon: '💳', color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Active Complaints', value: activeComplaints.toString(), trend: `${pendingComplaints} Pending`, icon: '⚠️', color: 'text-red-600', bg: 'bg-red-50' },
   ];
 
   const recentActivities = [
-    { id: 1, title: 'New Admission', desc: 'Rahul Sharma admitted to Room A-101', time: '10 mins ago', type: 'success' },
-    { id: 2, title: 'Maintenance Alert', desc: 'Plumbing issue reported in Block B', time: '1 hr ago', type: 'warning' },
-    { id: 3, title: 'Fee Payment', desc: '₹45,000 received via Gateway', time: '2 hrs ago', type: 'info' },
-    { id: 4, title: 'Leave Request', desc: 'Priya Patel requested leave for 3 days', time: '5 hrs ago', type: 'default' },
+    { id: 1, title: 'Dashboard Connected', desc: 'Real-time database sync active', time: 'Just now', type: 'success' },
+    { id: 2, title: 'Hostel System Active', desc: 'All modules functioning correctly', time: '1 min ago', type: 'info' },
   ];
 
   const quickActions = [

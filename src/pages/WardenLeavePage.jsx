@@ -1,9 +1,11 @@
 import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { LeaveContext } from '../context/LeaveContext';
+import { HostelContext } from '../context/HostelContext';
 
 export default function WardenLeavePage() {
   const { leaves: requests, updateLeaveStatus } = useContext(LeaveContext);
+  const { students, updateStudentDetails } = useContext(HostelContext);
   const [activeTab, setActiveTab] = useState('Pending');
 
   const pendingCount = requests.filter(r => r.status === 'Pending').length;
@@ -14,6 +16,27 @@ export default function WardenLeavePage() {
 
   const handleUpdateStatus = (id, newStatus) => {
     updateLeaveStatus(id, newStatus);
+    
+    // Auto-update student status in Hostel system
+    const req = requests.find(r => r.id === id);
+    if (req) {
+      // Find matching student by name and room (or studentId if we add it later)
+      const student = students.find(s => 
+        (req.studentId && s.studentId === req.studentId) || 
+        (s.name === req.studentName && s.roomNo === req.roomNo)
+      );
+      
+      if (student) {
+        if (newStatus === 'Approved') {
+          updateStudentDetails(student.studentId, { status: 'On Leave' });
+        } else if (newStatus === 'Rejected' || newStatus === 'Pending') {
+          // If un-approving, revert to In Hostel (assuming they aren't out for another reason)
+          if (student.status === 'On Leave') {
+            updateStudentDetails(student.studentId, { status: 'In Hostel' });
+          }
+        }
+      }
+    }
   };
 
   return (

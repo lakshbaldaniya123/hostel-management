@@ -1,53 +1,23 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
 export const MaintenanceContext = createContext();
 
 export const MaintenanceProvider = ({ children }) => {
-  const [requests, setRequests] = useState([
-    {
-      id: 'M001',
-      studentId: 'STU001',
-      studentName: 'Roshan M.',
-      roomNo: '201',
-      issueType: 'Electrical',
-      description: 'Fan is making a loud noise and speed is very slow.',
-      status: 'Scheduled',
-      scheduledDate: '2026-03-27',
-      scheduledTime: '14:30',
-      registeredAt: '2026-03-25T10:00:00Z',
-      rejectionReason: null,
-    },
-    {
-      id: 'M002',
-      studentId: 'STU002',
-      studentName: 'Lakshya B.',
-      roomNo: '305',
-      issueType: 'Plumbing',
-      description: 'The tap in the attached washroom is leaking continuously.',
-      status: 'Pending',
-      scheduledDate: null,
-      scheduledTime: null,
-      registeredAt: '2026-03-26T08:15:00Z',
-      rejectionReason: null,
-    },
-    {
-      id: 'M003',
-      studentId: 'STU003',
-      studentName: 'Ankit S.',
-      roomNo: '108',
-      issueType: 'Furniture',
-      description: 'Study table leg is broken.',
-      status: 'Completed',
-      scheduledDate: '2026-03-22',
-      scheduledTime: '11:00',
-      registeredAt: '2026-03-20T09:45:00Z',
-      rejectionReason: null,
-    }
-  ]);
+  const [requests, setRequests] = useState([]);
+  
+  // Base API URL
+  const API_URL = '/api/maintenance';
 
-  const addRequest = (studentId, studentName, roomNo, issueType, description, image = null) => {
+  // Fetch from Backend
+  useEffect(() => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setRequests(data))
+      .catch(err => console.error("Could not fetch maintenance data from backend:", err));
+  }, []);
+
+  const addRequest = async (studentId, studentName, roomNo, issueType, description, image = null) => {
     const newRequest = {
-      id: `M00${requests.length + 1}`,
       studentId,
       studentName,
       roomNo,
@@ -60,31 +30,59 @@ export const MaintenanceProvider = ({ children }) => {
       registeredAt: new Date().toISOString(),
       rejectionReason: null,
     };
-    setRequests(prev => [newRequest, ...prev]);
+    
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRequest)
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Failed to submit maintenance request: ${errorData.message}`);
+        throw new Error(errorData.message);
+      }
+      const savedData = await response.json();
+      setRequests(prev => [savedData, ...prev]);
+    } catch(err) { 
+      console.error("Error creating maintenance request:", err); 
+    }
   };
 
-  const scheduleRequest = (requestId, scheduledDate, scheduledTime) => {
-    setRequests(prev => prev.map(req => 
-      req.id === requestId 
-        ? { ...req, status: 'Scheduled', scheduledDate, scheduledTime, rejectionReason: null } 
-        : req
-    ));
+  const scheduleRequest = async (requestId, scheduledDate, scheduledTime) => {
+    try {
+      const response = await fetch(`${API_URL}/${requestId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Scheduled', scheduledDate, scheduledTime, rejectionReason: null })
+      });
+      const updatedReq = await response.json();
+      setRequests(prev => prev.map(req => req.id === requestId ? updatedReq : req));
+    } catch(err) { console.error("Error scheduling maintenance:", err); }
   };
 
-  const completeRequest = (requestId) => {
-    setRequests(prev => prev.map(req => 
-      req.id === requestId 
-        ? { ...req, status: 'Completed' } 
-        : req
-    ));
+  const completeRequest = async (requestId) => {
+    try {
+      const response = await fetch(`${API_URL}/${requestId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Completed' })
+      });
+      const updatedReq = await response.json();
+      setRequests(prev => prev.map(req => req.id === requestId ? updatedReq : req));
+    } catch(err) { console.error("Error completing maintenance:", err); }
   };
 
-  const rejectSchedule = (requestId, reason) => {
-    setRequests(prev => prev.map(req => 
-      req.id === requestId 
-        ? { ...req, status: 'Reschedule Requested', scheduledDate: null, scheduledTime: null, rejectionReason: reason } 
-        : req
-    ));
+  const rejectSchedule = async (requestId, reason) => {
+    try {
+      const response = await fetch(`${API_URL}/${requestId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Reschedule Requested', scheduledDate: null, scheduledTime: null, rejectionReason: reason })
+      });
+      const updatedReq = await response.json();
+      setRequests(prev => prev.map(req => req.id === requestId ? updatedReq : req));
+    } catch(err) { console.error("Error modifying schedule:", err); }
   };
 
   return (

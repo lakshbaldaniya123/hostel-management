@@ -62,14 +62,12 @@ const menuItems = {
     { label: 'Maintenance', icon: Icons.Maintenance, path: '/admin-maintenance'},
     { label: 'Fees',        icon: Icons.Fees,        path: '/admin-fees'      },
     { label: 'Staff',       icon: Icons.Staff,       path: '/staff'           },
-    { label: 'Reports',     icon: Icons.Reports,     path: '/reports'         },
     { label: 'Gate Pass',   icon: Icons.GatePass,    path: '/admin-gate-pass' },
     { label: 'Mess System', icon: Icons.Mess,        path: '/admin-mess'      },
     { label: 'Gym Booking', icon: Icons.Gym,         path: '/admin-gym'       },
     { label: 'Lost & Found',icon: Icons.LostFound,   path: '/admin-lost-found'},
     { label: 'Complaints',  icon: Icons.Complaints,  path: '/admin-complaints'},
     { label: 'Meetings',    icon: Icons.Meetings,    path: '/meetings'        },
-    { label: 'Settings',    icon: Icons.Settings,    path: '/settings'        },
   ],
   Housekeeper: [
     { label: 'Dashboard',   icon: Icons.Dashboard,   path: '/housekeeper-dashboard' },
@@ -79,7 +77,6 @@ const menuItems = {
   Security: [
     { label: 'Dashboard',    icon: Icons.Dashboard,   path: '/security-dashboard' },
     { label: 'Gate Pass Check',icon: Icons.GatePass,  path: '/security-gate-pass' },
-    { label: 'Exit Logs',    icon: Icons.Leave,       path: '/exit-logs'          },
     { label: 'Nuisance',     icon: Icons.Complaints,  path: '/nuisance-report'    },
     { label: 'Lost & Found', icon: Icons.LostFound,   path: '/security-lost-found'},
     { label: 'Meetings',     icon: Icons.Meetings,    path: '/security-meetings'  },

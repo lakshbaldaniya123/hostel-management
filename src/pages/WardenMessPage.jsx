@@ -1,66 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
-
-const DEFAULT_MENU = {
-  Monday: { breakfast: 'Poha + Jalebi', lunch: 'Dal + Rice + Aloo Sabzi', snacks: 'Samosa', dinner: 'Roti + Paneer Butter Masala' },
-  Tuesday: { breakfast: 'Idli + Sambar', lunch: 'Rajma + Chawal', snacks: 'Bread Pakora', dinner: 'Roti + Mix Veg' },
-  Wednesday: { breakfast: 'Aloo Paratha', lunch: 'Kadi + Pakora', snacks: 'Noodles', dinner: 'Roti + Egg Curry / Dal Tadka' },
-  Thursday: { breakfast: 'Upma', lunch: 'Chole + Bhature', snacks: 'Patties', dinner: 'Roti + Bhindi' },
-  Friday: { breakfast: 'Sandwich', lunch: 'Dal Makhani + Rice', snacks: 'Bhel Puri', dinner: 'Roti + Malai Kofta' },
-  Saturday: { breakfast: 'Puri Sabzi', lunch: 'Pulao + Raita', snacks: 'Pav Bhaji', dinner: 'Roti + Chicken / Soya Chaap' },
-  Sunday: { breakfast: 'Masala Dosa', lunch: 'Special Thali', snacks: 'Pastries', dinner: 'Roti + Dal Fry' },
-};
+import { MessContext } from '../context/MessContext';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function WardenMessPage({ fixedRole = "Warden" }) {
+  const { weeklyMenu, feedback, updateMenu, markFeedbackAsRead } = useContext(MessContext);
   const [activeTab, setActiveTab] = useState('feedback');
-  const [feedback, setFeedback] = useState([]);
   
   // Menu Editor State
-  const [weeklyMenu, setWeeklyMenu] = useState(DEFAULT_MENU);
   const [selectedDay, setSelectedDay] = useState('Monday');
-  const [editForm, setEditForm] = useState(DEFAULT_MENU['Monday']);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
-    // Load Feedback
-    const saved = localStorage.getItem('messFeedback');
-    if (saved) {
-      setFeedback(JSON.parse(saved));
+    if (weeklyMenu && weeklyMenu[selectedDay]) {
+      setEditForm(weeklyMenu[selectedDay]);
     }
-    
-    // Load Menu
-    const savedMenu = localStorage.getItem('messWeeklyMenu');
-    if (savedMenu) {
-      const parsed = JSON.parse(savedMenu);
-      setWeeklyMenu(parsed);
-      setEditForm(parsed['Monday']);
-    } else {
-      localStorage.setItem('messWeeklyMenu', JSON.stringify(DEFAULT_MENU));
-    }
-  }, []);
+  }, [weeklyMenu, selectedDay]);
 
-  const markAsRead = (id) => {
-    const updated = feedback.map(f => 
-      f.id === id ? { ...f, status: 'Read' } : f
-    );
-    setFeedback(updated);
-    localStorage.setItem('messFeedback', JSON.stringify(updated));
+  const markAsRead = async (id) => {
+    await markFeedbackAsRead(id);
   };
 
   const handleDaySelect = (day) => {
     setSelectedDay(day);
-    setEditForm(weeklyMenu[day]);
+    if (weeklyMenu && weeklyMenu[day]) {
+      setEditForm(weeklyMenu[day]);
+    }
   };
 
-  const saveMenuChanges = (e) => {
+  const saveMenuChanges = async (e) => {
     e.preventDefault();
     const newMenu = {
       ...weeklyMenu,
       [selectedDay]: editForm
     };
-    setWeeklyMenu(newMenu);
-    localStorage.setItem('messWeeklyMenu', JSON.stringify(newMenu));
+    await updateMenu(newMenu);
     alert(`${selectedDay}'s menu has been successfully updated.`);
   };
 

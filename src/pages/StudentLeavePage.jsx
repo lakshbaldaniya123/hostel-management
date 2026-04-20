@@ -1,9 +1,14 @@
 import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { LeaveContext } from '../context/LeaveContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function StudentLeavePage() {
   const { leaves, addLeave } = useContext(LeaveContext);
+  const { currentUser } = useAuth();
+  const studentName = currentUser?.name || 'Student';
+  const roomNo = currentUser?.roomNo || '';
+  const parentPhone = currentUser?.parentPhone || '';
   const [fromDate, setFromDate] = useState('');
   const [fromTime, setFromTime] = useState('');
   const [toDate, setToDate] = useState('');
@@ -36,8 +41,14 @@ export default function StudentLeavePage() {
       return;
     }
 
+    const studentId = currentUser?.studentId || ''; // Guaranteed if properly logged in
+    
     const newLeave = {
       id: `LV-${Math.floor(1000 + Math.random() * 9000)}`,
+      studentId,
+      studentName,
+      roomNo,
+      parentPhone,
       fromDate,
       fromTime,
       toDate,
@@ -72,7 +83,7 @@ export default function StudentLeavePage() {
             </p>
           </div>
           <div className="hidden sm:flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-600">Hi, Shyam</span>
+            <span className="text-sm font-medium text-gray-600">Hi, {studentName}</span>
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl shadow-sm">🎓</div>
           </div>
         </div>

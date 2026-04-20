@@ -1,36 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
-
-const machinesData = {
-  'Block A Lobby': [
-    { name: 'Lays Classic', price: '₹20', stock: 5, img: '🥔' },
-    { name: 'Red Bull', price: '₹120', stock: 0, img: '🥤' },
-    { name: 'Dairy Milk', price: '₹40', stock: 12, img: '🍫' },
-    { name: 'Diet Coke', price: '₹40', stock: 3, img: '🥫' },
-    { name: 'Kurkure', price: '₹20', stock: 8, img: '🌶️' },
-    { name: 'Water Bottle', price: '₹20', stock: 15, img: '💧' },
-  ],
-  'Block B Ground': [
-    { name: 'Oreo', price: '₹30', stock: 10, img: '🍪' },
-    { name: 'Mountain Dew', price: '₹40', stock: 5, img: '🥤' },
-    { name: 'Snickers', price: '₹50', stock: 0, img: '🍫' },
-    { name: 'Nachos', price: '₹60', stock: 4, img: '🧀' },
-    { name: 'Water Bottle', price: '₹20', stock: 2, img: '💧' },
-    { name: 'Cold Coffee', price: '₹80', stock: 7, img: '☕' },
-  ],
-  'Central Library': [
-    { name: 'Protein Bar', price: '₹100', stock: 12, img: '💪' },
-    { name: 'Black Coffee', price: '₹50', stock: 8, img: '☕' },
-    { name: 'Mixed Nuts', price: '₹80', stock: 5, img: '🥜' },
-    { name: 'Water Bottle', price: '₹20', stock: 20, img: '💧' },
-    { name: 'Energy Drink', price: '₹110', stock: 0, img: '⚡' },
-    { name: 'Dark Choco', price: '₹90', stock: 3, img: '🍫' },
-  ]
-};
+import { VendingContext } from '../context/VendingContext';
 
 export default function StudentVendingMachinePage() {
+  const { vendingItems } = useContext(VendingContext);
   const [selectedMachine, setSelectedMachine] = useState('Block A Lobby');
-  const items = machinesData[selectedMachine];
+  
+  // Get unique locations dynamically from data, fallback to defaults if empty initially
+  const locations = [...new Set(vendingItems.map(item => item.location))];
+  const displayLocations = locations.length > 0 ? locations : ['Block A Lobby', 'Block B Ground', 'Central Library'];
+  
+  const items = vendingItems.filter(item => item.location === selectedMachine);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -43,7 +23,7 @@ export default function StudentVendingMachinePage() {
 
         {/* Location selector tabs */}
         <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-          {Object.keys(machinesData).map(loc => (
+          {displayLocations.map(loc => (
             <button
               key={loc}
               onClick={() => setSelectedMachine(loc)}
@@ -53,7 +33,7 @@ export default function StudentVendingMachinePage() {
                   : 'bg-white text-gray-600 hover:bg-indigo-50 border border-gray-200'
               }`}
             >
-              📍 {loc}
+              📍 {loc === 'Block A Lobby' ? 'A Block' : loc === 'Block B Ground' ? 'B Block' : loc === 'Central Library' ? 'C Block' : loc}
             </button>
           ))}
         </div>

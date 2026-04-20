@@ -1,9 +1,19 @@
 import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { HostelContext } from '../context/HostelContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function WardenStudentsPage({ fixedRole = "Warden" }) {
-  const { students, updateStudentDetails } = useContext(HostelContext);
+  const { students, updateStudentDetails, enrollStudent } = useContext(HostelContext);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'Admin';
+
+  // Filter to only show students from this warden's block
+  const myStudents = currentUser?.role === 'Admin'
+    ? students
+    : (currentUser?.block 
+        ? students.filter(s => s.roomNo && s.roomNo.toUpperCase().startsWith(currentUser.block.toUpperCase()))
+        : []);
   
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -11,9 +21,36 @@ export default function WardenStudentsPage({ fixedRole = "Warden" }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editForm, setEditForm] = useState({});
 
-  const filteredStudents = students.filter(student => 
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  // ── Enrollment modal state (Admin only) ───────────────────────────────
+  const blankForm = { studentId:'', name:'', email:'', phone:'', course:'', parentName:'', parentPhone:'' };
+  const [showEnroll, setShowEnroll]     = useState(false);
+  const [enrollForm, setEnrollForm]     = useState(blankForm);
+  const [enrolling, setEnrolling]       = useState(false);
+  const [enrollError, setEnrollError]   = useState('');
+  const [enrollSuccess, setEnrollSuccess] = useState(null); // holds result object
+
+  const handleEnrollChange = e => setEnrollForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const submitEnroll = async e => {
+    e.preventDefault();
+    setEnrolling(true);
+    setEnrollError('');
+    try {
+      const result = await enrollStudent(enrollForm);
+      setEnrollSuccess(result);
+      setEnrollForm(blankForm);
+    } catch (err) {
+      setEnrollError(err.message);
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const closeEnroll = () => { setShowEnroll(false); setEnrollSuccess(null); setEnrollError(''); setEnrollForm(blankForm); };
+
+  const filteredStudents = myStudents.filter(student =>
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.roomNo.includes(searchTerm)
   );
 
@@ -49,6 +86,16 @@ export default function WardenStudentsPage({ fixedRole = "Warden" }) {
               Manage and view all students currently registered in the hostel.
             </p>
           </div>
+          {/* Enroll button — Admin only */}
+          {isAdmin && (
+            <button
+              onClick={() => setShowEnroll(true)}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow transition-all text-sm"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Enroll New Student
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -340,6 +387,91 @@ export default function WardenStudentsPage({ fixedRole = "Warden" }) {
               )}
             </div>
             
+          </div>
+        </div>
+      )}
+
+      {/* ── Enroll New Student Modal (Admin only) ───────────────────────── */}
+      {showEnroll && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in">
+
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-6 flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Enroll New Student</h2>
+                <p className="text-indigo-200 text-sm mt-1">Fill in details — room will be auto-assigned from available vacancies</p>
+              </div>
+              <button onClick={closeEnroll} className="text-white/80 hover:text-white transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div className="p-8 overflow-y-auto max-h-[70vh]">
+
+              {/* ── Success Card ── */}
+              {enrollSuccess ? (
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">Student Enrolled!</h3>
+                  <p className="text-gray-500 text-sm mb-6">{enrollSuccess.message}</p>
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 text-left space-y-3 mb-6">
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">Generated Credentials</p>
+                    <div className="flex justify-between"><span className="text-gray-600 font-medium">Student Name</span><span className="font-bold text-gray-900">{enrollSuccess.student?.name}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-600 font-medium">Login ID</span><span className="font-bold text-indigo-700 font-mono">{enrollSuccess.loginId}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-600 font-medium">Password</span><span className="font-bold text-indigo-700 font-mono">{enrollSuccess.password}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-600 font-medium">Assigned Room</span><span className="font-bold text-green-700">{enrollSuccess.assignedRoom}</span></div>
+                  </div>
+                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 mb-6">⚠️ Share these credentials with the student and ask them to change their password on first login.</p>
+                  <div className="flex gap-3 justify-center">
+                    <button onClick={() => setEnrollSuccess(null)} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors">Enroll Another</button>
+                    <button onClick={closeEnroll} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors">Close</button>
+                  </div>
+                </div>
+              ) : (
+                /* ── Enroll Form ── */
+                <form onSubmit={submitEnroll} className="space-y-5">
+                  {enrollError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">{enrollError}</div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { label:'Student ID *',      name:'studentId',   placeholder:'e.g. STU101',         type:'text' },
+                      { label:'Full Name *',        name:'name',        placeholder:'e.g. Rahul Kumar',    type:'text' },
+                      { label:'Email Address',      name:'email',       placeholder:'e.g. rahul@gmail.com',type:'email' },
+                      { label:'Mobile Number *',    name:'phone',       placeholder:'10-digit mobile',     type:'text' },
+                      { label:'Course *',           name:'course',      placeholder:'e.g. B.Tech CS',      type:'text' },
+                      { label:'Parent Name',        name:'parentName',  placeholder:'e.g. Mr. Kumar',      type:'text' },
+                      { label:'Parent Mobile',      name:'parentPhone', placeholder:'10-digit mobile',     type:'text' },
+                    ].map(f => (
+                      <div key={f.name} className={f.name === 'course' ? 'md:col-span-2' : ''}>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">{f.label}</label>
+                        <input
+                          type={f.type}
+                          name={f.name}
+                          value={enrollForm[f.name]}
+                          onChange={handleEnrollChange}
+                          placeholder={f.placeholder}
+                          required={f.label.includes('*')}
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
+                    🏠 Room will be <strong>auto-assigned</strong> from the first available vacancy. Default password: <code className="font-mono bg-blue-100 px-1 rounded">student@123</code>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button type="submit" disabled={enrolling} className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-semibold py-3 rounded-xl transition-colors shadow-sm">
+                      {enrolling ? 'Enrolling...' : 'Enroll Student'}
+                    </button>
+                    <button type="button" onClick={closeEnroll} className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors">Cancel</button>
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       )}

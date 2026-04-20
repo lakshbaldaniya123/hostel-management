@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { MeetingContext } from '../context/MeetingContext';
 
-export default function WardenMeetingsPage() {
+export default function WardenMeetingsPage({ fixedRole = "Warden" }) {
   const { meetings, scheduleMeeting } = useContext(MeetingContext);
   
   const [title, setTitle] = useState('');
@@ -34,7 +34,7 @@ export default function WardenMeetingsPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
-      <Sidebar role="Warden" />
+      <Sidebar role={fixedRole} />
       
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto w-full md:w-auto mt-16 md:mt-0">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">

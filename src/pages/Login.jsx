@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const roles = [
   { id: 'Student', icon: '🎓' },
@@ -10,22 +11,60 @@ const roles = [
 
 export default function Login() {
   const [selectedRole, setSelectedRole] = useState('Student');
-  const [staffRole,    setStaffRole]    = useState('Housekeeper'); // For staff sub-role
+  const [staffRole,    setStaffRole]    = useState('Housekeeper');
   const [hostelId,     setHostelId]     = useState('');
   const [password,     setPassword]     = useState('');
   const [showPass,     setShowPass]     = useState(false);
   const [remember,     setRemember]     = useState(false);
+  const [errorMsg,     setErrorMsg]     = useState('');
+  const [loading,      setLoading]      = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
-    if (selectedRole === 'Student') navigate('/student-dashboard');
-    if (selectedRole === 'Warden')  navigate('/warden-dashboard');
-    if (selectedRole === 'Admin')   navigate('/admin-dashboard');
-    if (selectedRole === 'Staff') {
-      if (staffRole === 'Housekeeper') navigate('/housekeeper-dashboard');
-      if (staffRole === 'Security')    navigate('/security-dashboard');
+    setErrorMsg('');
+
+    // ── Frontend guard — both fields required ──────────────────────────────
+    if (!hostelId.trim() || !password.trim()) {
+      setErrorMsg('Please enter both Hostel ID and Password.');
+      return;
     }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hostelId: hostelId.trim(), password, role: selectedRole, staffRole })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Backend returned 400/401/403 — show the error, DO NOT navigate
+        setErrorMsg(data.message || 'Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // ── Success ────────────────────────────────────────────────────────────
+      login(data.user);
+      console.log('✅ Logged in as:', data.user.name, '|', data.user.role);
+
+      if (selectedRole === 'Student') navigate('/student-dashboard');
+      if (selectedRole === 'Warden')  navigate('/warden-dashboard');
+      if (selectedRole === 'Admin')   navigate('/admin-dashboard');
+      if (selectedRole === 'Staff') {
+        if (staffRole === 'Housekeeper') navigate('/housekeeper-dashboard');
+        if (staffRole === 'Security')    navigate('/security-dashboard');
+      }
+
+    } catch (err) {
+      // Backend offline fallback — still requires valid-looking inputs
+      console.warn('Backend offline — routing locally:', err.message);
+      setErrorMsg('Cannot reach server. Please make sure the backend is running.');
+    }
+    setLoading(false);
   }
 
   return (
@@ -104,6 +143,16 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleLogin}>
+
+            {/* Error Banner */}
+            {errorMsg && (
+              <div style={styles.errorBanner}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {errorMsg}
+              </div>
+            )}
             
             {/* Show staff sub-role selector if Staff is selected */}
             {selectedRole === 'Staff' && (
@@ -186,11 +235,17 @@ export default function Login() {
             </div>
 
             {/* Sign In button */}
-            <button type="submit" style={styles.signInBtn}
-              onMouseEnter={e => e.target.style.background = '#0f766e'}
-              onMouseLeave={e => e.target.style.background = '#0d9488'}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                ...styles.signInBtn,
+                ...(loading ? { background: '#5eead4', cursor: 'not-allowed' } : {})
+              }}
+              onMouseEnter={e => { if (!loading) e.target.style.background = '#0f766e'; }}
+              onMouseLeave={e => { if (!loading) e.target.style.background = '#0d9488'; }}
             >
-              Sign In
+              {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
         </div>
@@ -206,6 +261,20 @@ export default function Login() {
 
 /* ── Styles ── */
 const styles = {
+  errorBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '12px 14px',
+    backgroundColor: '#fef2f2',
+    border: '1.5px solid #fecaca',
+    borderRadius: 10,
+    color: '#b91c1c',
+    fontSize: 13,
+    fontWeight: 500,
+    marginBottom: 16,
+  },
+
   page: {
     display: 'flex',
     minHeight: '100vh',

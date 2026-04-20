@@ -1,50 +1,26 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
+import { FeesContext } from '../context/FeesContext';
 
 export default function AdminFeesPage() {
-  const feeRecords = [
-    {
-      student: 'Rahul Sharma',
-      id: 'STU-2024-001',
-      amount: '₹45,000',
-      dueDate: '2026-03-01',
-      paidDate: '2026-02-28',
-      status: 'Paid',
-    },
-    {
-      student: 'Priya Patel',
-      id: 'STU-2024-002',
-      amount: '₹45,000',
-      dueDate: '2026-03-01',
-      paidDate: '2026-02-25',
-      status: 'Paid',
-    },
-    {
-      student: 'Amit Kumar',
-      id: 'STU-2024-003',
-      amount: '₹45,000',
-      dueDate: '2026-03-01',
-      paidDate: '-',
-      status: 'Pending',
-    },
-    {
-      student: 'Ananya Gupta',
-      id: 'STU-2024-006',
-      amount: '₹45,000',
-      dueDate: '2026-02-01',
-      paidDate: '-',
-      status: 'Overdue',
-    },
-    {
-      student: 'Rohan Joshi',
-      id: 'STU-2024-007',
-      amount: '₹45,000',
-      dueDate: '2026-03-01',
-      paidDate: '2026-03-01',
-      status: 'Paid',
-    }
-  ];
+  const { feeRecords } = useContext(FeesContext);
+
+  const totalCollected = feeRecords.reduce((acc, rec) => 
+    rec.status === 'Paid' ? acc + (rec.amount || 0) : acc
+  , 0);
+
+  const pendingAmount = feeRecords.reduce((acc, rec) => 
+    rec.status === 'Pending' ? acc + (rec.amount || 0) : acc
+  , 0);
+
+  const overdueAmount = feeRecords.reduce((acc, rec) => 
+    rec.status === 'Overdue' ? acc + (rec.amount || 0) : acc
+  , 0);
+
+  const totalBilled = totalCollected + pendingAmount + overdueAmount;
+  const collectionRate = totalBilled > 0 ? Math.round((totalCollected / totalBilled) * 100) : 0;
+
 
   return (
     <div className="flex bg-white font-sans text-gray-800" style={{ height: '100vh', overflow: 'hidden' }}>
@@ -65,7 +41,7 @@ export default function AdminFeesPage() {
                   <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="2" y1="10" x2="22" y2="10"/>
                 </svg>
               </div>
-              <div className="text-[28px] font-bold text-[#1f2937]">₹52,00,000</div>
+              <div className="text-[28px] font-bold text-[#1f2937]">₹{totalCollected.toLocaleString('en-IN')}</div>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
@@ -75,7 +51,7 @@ export default function AdminFeesPage() {
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
               </div>
-              <div className="text-[28px] font-bold text-[#1f2937]">₹4,20,000</div>
+              <div className="text-[28px] font-bold text-[#1f2937]">₹{pendingAmount.toLocaleString('en-IN')}</div>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
@@ -85,7 +61,7 @@ export default function AdminFeesPage() {
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
               </div>
-              <div className="text-[28px] font-bold text-[#1f2937]">₹1,80,000</div>
+              <div className="text-[28px] font-bold text-[#1f2937]">₹{overdueAmount.toLocaleString('en-IN')}</div>
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
@@ -95,7 +71,7 @@ export default function AdminFeesPage() {
                   <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
                 </svg>
               </div>
-              <div className="text-[28px] font-bold text-[#1f2937]">92%</div>
+              <div className="text-[28px] font-bold text-[#1f2937]">{collectionRate}%</div>
             </div>
           </div>
 
@@ -120,15 +96,18 @@ export default function AdminFeesPage() {
                     else if (record.status === 'Pending') badgeClass = 'bg-[#f9fafb] text-[#374151] border border-gray-200';
                     else if (record.status === 'Overdue') badgeClass = 'bg-[#dc2626] text-white';
 
+                    const amountDisplay = `₹${(record.amount || 0).toLocaleString('en-IN')}`;
+                    const lastPaidDate = record.paidDate || '-';
+
                     return (
                       <tr key={index} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                         <td className="py-4">
-                          <div className="font-medium text-[#1f2937] text-[15px]">{record.student}</div>
-                          <div className="text-[13px] text-gray-400 mt-0.5">{record.id}</div>
+                          <div className="font-medium text-[#1f2937] text-[15px]">{record.studentName}</div>
+                          <div className="text-[13px] text-gray-400 mt-0.5">{record.studentId}</div>
                         </td>
-                        <td className="py-4 text-[#1f2937] font-medium text-[15px]">{record.amount}</td>
+                        <td className="py-4 text-[#1f2937] font-medium text-[15px]">{amountDisplay}</td>
                         <td className="py-4 text-gray-500 text-[15px]">{record.dueDate}</td>
-                        <td className="py-4 text-gray-500 text-[15px]">{record.paidDate}</td>
+                        <td className="py-4 text-gray-500 text-[15px]">{lastPaidDate}</td>
                         <td className="py-4">
                           <span className={`text-[12px] font-bold px-[12px] py-[4px] rounded-full inline-block ${badgeClass}`}>
                             {record.status}

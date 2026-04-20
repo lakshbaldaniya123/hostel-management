@@ -1,36 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
-
-const initialMachinesData = {
-  'Block A Lobby': [
-    { id: 1, name: 'Lays Classic', price: '₹20', stock: 5, status: 'Low' },
-    { id: 2, name: 'Red Bull', price: '₹120', stock: 0, status: 'Empty' },
-    { id: 3, name: 'Dairy Milk', price: '₹40', stock: 12, status: 'Good' },
-  ],
-  'Block B Ground': [
-    { id: 4, name: 'Oreo', price: '₹30', stock: 0, status: 'Empty' },
-    { id: 5, name: 'Mountain Dew', price: '₹40', stock: 5, status: 'Low' },
-  ],
-  'Central Library': [
-    { id: 6, name: 'Energy Drink', price: '₹110', stock: 0, status: 'Empty' },
-    { id: 7, name: 'Dark Choco', price: '₹90', stock: 2, status: 'Low' },
-  ]
-};
+import { VendingContext } from '../context/VendingContext';
 
 export default function WardenVendingMachinePage() {
-  const [machines, setMachines] = useState(initialMachinesData);
+  const { vendingItems, handleRestock } = useContext(VendingContext);
   const [selectedMachine, setSelectedMachine] = useState('Block A Lobby');
   
-  const items = machines[selectedMachine];
-
-  const handleRestock = (id) => {
-    setMachines({
-      ...machines,
-      [selectedMachine]: machines[selectedMachine].map(i => 
-        i.id === id ? { ...i, stock: 15, status: 'Good' } : i
-      )
-    });
-  };
+  const locations = [...new Set(vendingItems.map(item => item.location))];
+  const displayLocations = locations.length > 0 ? locations : ['Block A Lobby', 'Block B Ground', 'Central Library'];
+  
+  const items = vendingItems.filter(item => item.location === selectedMachine);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -40,7 +19,7 @@ export default function WardenVendingMachinePage() {
         
         {/* Location selector tabs */}
         <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-          {Object.keys(machines).map(loc => (
+          {displayLocations.map(loc => (
             <button
               key={loc}
               onClick={() => setSelectedMachine(loc)}
@@ -50,7 +29,7 @@ export default function WardenVendingMachinePage() {
                   : 'bg-white text-gray-600 hover:bg-indigo-50 border border-gray-200'
               }`}
             >
-              📍 {loc}
+              📍 {loc === 'Block A Lobby' ? 'A Block' : loc === 'Block B Ground' ? 'B Block' : loc === 'Central Library' ? 'C Block' : loc}
             </button>
           ))}
         </div>
@@ -74,7 +53,7 @@ export default function WardenVendingMachinePage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {items.map(item => (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item._id} className="hover:bg-gray-50">
                   <td className="p-4 font-medium text-gray-800">{item.name}</td>
                   <td className="p-4 text-gray-600">{item.price}</td>
                   <td className="p-4">
@@ -87,7 +66,7 @@ export default function WardenVendingMachinePage() {
                   </td>
                   <td className="p-4">
                     <button 
-                      onClick={() => handleRestock(item.id)}
+                      onClick={() => handleRestock(item._id)}
                       className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 font-medium text-sm transition-colors"
                     >
                       Restock (+15)

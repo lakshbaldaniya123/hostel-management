@@ -1,31 +1,30 @@
 import React, { useState, useContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import { ComplaintContext } from '../context/ComplaintContext';
-
-// Current logged in security mock profile
-const CURRENT_SECURITY = {
-  name: 'Guard Sharma',
-  mobile: '8877665544',
-  location: 'Gate 2'
-};
+import { useAuth } from '../context/AuthContext';
 
 export default function SecurityNuisancePage() {
   const { complaints, raiseComplaint } = useContext(ComplaintContext);
+  const { currentUser } = useAuth();
   
   const [activeTab, setActiveTab] = useState('lodge');
   const [description, setDescription] = useState('');
 
-  const myComplaints = complaints.filter(c => c.name === CURRENT_SECURITY.name && c.mobile === CURRENT_SECURITY.mobile);
+  const userName = currentUser?.name || 'Security Guard';
+  const userMobile = currentUser?.contact || 'N/A';
+  const roleName = currentUser?.role || 'Security';
+
+  const myComplaints = complaints.filter(c => c.name === userName);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!description.trim()) return;
 
     raiseComplaint({ 
-      userType: 'Security', 
-      name: CURRENT_SECURITY.name, 
-      mobile: CURRENT_SECURITY.mobile, 
-      roomNo: CURRENT_SECURITY.location, // Mapping Location to RoomNo field conceptually
+      userType: roleName, 
+      name: userName, 
+      mobile: userMobile, 
+      roomNo: 'Gate', // Assuming Gate for security
       description 
     });
     
@@ -74,15 +73,15 @@ export default function SecurityNuisancePage() {
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row justify-between md:items-center gap-4">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Officer on Duty</span>
-                    <span className="text-sm font-bold text-gray-900">{CURRENT_SECURITY.name}</span>
+                    <span className="text-sm font-bold text-gray-900">{userName}</span>
                   </div>
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Contact</span>
-                    <span className="text-sm font-bold text-gray-900">{CURRENT_SECURITY.mobile}</span>
+                    <span className="text-sm font-bold text-gray-900">{userMobile}</span>
                   </div>
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Post</span>
-                    <span className="text-sm font-bold text-gray-900">{CURRENT_SECURITY.location}</span>
+                    <span className="text-sm font-bold text-gray-900">{roleName}</span>
                   </div>
                 </div>
 
